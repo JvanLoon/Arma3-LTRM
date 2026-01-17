@@ -1,7 +1,9 @@
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
+using System.Collections.Concurrent;
 using Arma_3_LTRM.Models;
 using MessageBox = System.Windows.MessageBox;
 
@@ -25,6 +27,8 @@ namespace Arma_3_LTRM.Services
 
         private int _skippedFiles = 0;
         private int _downloadedFiles = 0;
+        private readonly int _maxConcurrentDownloads = 8;
+        private readonly int _bufferSize = 65536; // 64KB buffer
 
         public async Task<bool> DownloadRepositoryAsync(Repository repository, string destinationPath, IProgress<string>? progress = null)
         {
@@ -70,34 +74,54 @@ namespace Arma_3_LTRM.Services
         private FtpDirectoryCache BuildDirectoryCache(Uri ftpUri, string username, string password, string currentPath, IProgress<string>? progress)
         {
             var cache = new FtpDirectoryCache();
-            BuildDirectoryCacheRecursive(ftpUri, username, password, currentPath, cache, progress);
+            var directoriesToScan = new ConcurrentQueue<string>();
+            directoriesToScan.Enqueue(currentPath);
+
+            var tasks = new List<Task>();
+            var semaphore = new SemaphoreSlim(_maxConcurrentDownloads);
+
+            while (!directoriesToScan.IsEmpty || tasks.Count > 0)
+            {
+                while (directoriesToScan.TryDequeue(out var path))
+                {
+                    var task = Task.Run(async () =>
+                    {
+                        await semaphore.WaitAsync();
+                        try
+                        {
+                            var items = GetDirectoryListingOptimized(ftpUri, username, password, path);
+                            lock (cache.Cache)
+                            {
+                                cache.Cache[path] = items;
+                            }
+                            progress?.Report($"Scanned: {path} ({items.Count} items)");
+
+                            foreach (var item in items.Where(i => i.IsDirectory && i.Name != "." && i.Name != ".."))
+                            {
+                                directoriesToScan.Enqueue(item.FullPath);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            progress?.Report($"Error scanning {path}: {ex.Message}");
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    });
+                    tasks.Add(task);
+                }
+
+                if (tasks.Count > 0)
+                {
+                    Task.WaitAny(tasks.ToArray());
+                    tasks.RemoveAll(t => t.IsCompleted);
+                }
+            }
+
+            Task.WaitAll(tasks.ToArray());
             return cache;
-        }
-
-        private void BuildDirectoryCacheRecursive(Uri baseUri, string username, string password, string currentPath, FtpDirectoryCache cache, IProgress<string>? progress)
-        {
-            try
-            {
-                var ftpUri = new Uri($"{baseUri.Scheme}://{baseUri.Host}:{baseUri.Port}{currentPath}");
-                if (!ftpUri.AbsolutePath.EndsWith("/"))
-                {
-                    ftpUri = new Uri(ftpUri.ToString() + "/");
-                }
-
-                progress?.Report($"Scanning: {currentPath}");
-
-                var items = GetDirectoryListingOptimized(ftpUri, username, password, currentPath);
-                cache.Cache[currentPath] = items;
-
-                foreach (var item in items.Where(i => i.IsDirectory && i.Name != "." && i.Name != ".."))
-                {
-                    BuildDirectoryCacheRecursive(baseUri, username, password, item.FullPath, cache, progress);
-                }
-            }
-            catch (Exception ex)
-            {
-                progress?.Report($"Error scanning {currentPath}: {ex.Message}");
-            }
         }
 
         private void DownloadDirectoryFromCache(FtpDirectoryCache cache, string currentPath, string username, string password, string destinationPath, string ftpHost, int ftpPort, IProgress<string>? progress)
@@ -107,38 +131,49 @@ namespace Arma_3_LTRM.Services
                 if (!Directory.Exists(destinationPath))
                 {
                     Directory.CreateDirectory(destinationPath);
-                    progress?.Report($"Created directory: {Path.GetFileName(destinationPath)}");
                 }
 
                 if (!cache.Cache.TryGetValue(currentPath, out var items))
                     return;
 
-                foreach (var item in items)
+                var subdirectories = items.Where(i => i.IsDirectory && i.Name != "." && i.Name != "..").ToList();
+                var files = items.Where(i => !i.IsDirectory).ToList();
+
+                // Process subdirectories first
+                foreach (var dir in subdirectories)
                 {
-                    if (item.Name == "." || item.Name == "..")
-                        continue;
-
-                    var localPath = Path.Combine(destinationPath, item.Name);
-
-                    if (item.IsDirectory)
-                    {
-                        DownloadDirectoryFromCache(cache, item.FullPath, username, password, localPath, ftpHost, ftpPort, progress);
-                    }
-                    else
-                    {
-                        if (ShouldDownloadFile(localPath, item.Size, item.LastModified))
-                        {
-                            progress?.Report($"Downloading: {item.Name} ({FormatFileSize(item.Size)})");
-                            var itemUri = new Uri($"ftp://{ftpHost}:{ftpPort}{item.FullPath}");
-                            DownloadFileWithProgress(itemUri, username, password, localPath, item.Size, item.LastModified, progress);
-                            _downloadedFiles++;
-                        }
-                        else
-                        {
-                            _skippedFiles++;
-                        }
-                    }
+                    var localPath = Path.Combine(destinationPath, dir.Name);
+                    DownloadDirectoryFromCache(cache, dir.FullPath, username, password, localPath, ftpHost, ftpPort, progress);
                 }
+
+                // Download files in parallel
+                var filesToDownload = files.Where(f => ShouldDownloadFile(
+                    Path.Combine(destinationPath, f.Name), f.Size, f.LastModified)).ToList();
+
+                var semaphore = new SemaphoreSlim(_maxConcurrentDownloads);
+                var downloadTasks = filesToDownload.Select(async file =>
+                {
+                    await semaphore.WaitAsync();
+                    try
+                    {
+                        var localPath = Path.Combine(destinationPath, file.Name);
+                        progress?.Report($"Downloading: {file.Name} ({FormatFileSize(file.Size)})");
+                        var itemUri = new Uri($"ftp://{ftpHost}:{ftpPort}{file.FullPath}");
+                        await Task.Run(() => DownloadFileWithProgress(itemUri, username, password, localPath, file.Size, file.LastModified, progress));
+                        Interlocked.Increment(ref _downloadedFiles);
+                    }
+                    catch (Exception ex)
+                    {
+                        progress?.Report($"Failed to download {file.Name}: {ex.Message}");
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }).ToArray();
+
+                Task.WaitAll(downloadTasks);
+                Interlocked.Add(ref _skippedFiles, files.Count - filesToDownload.Count);
             }
             catch (Exception ex)
             {
@@ -150,13 +185,46 @@ namespace Arma_3_LTRM.Services
         {
             var items = new List<FtpItem>();
 
+            // Try MLSD first (modern, structured listing)
+            try
+            {
+                var mlsdRequest = (FtpWebRequest)WebRequest.Create(ftpUri);
+                mlsdRequest.Method = "MLSD";
+                mlsdRequest.Credentials = new NetworkCredential(username, password);
+                mlsdRequest.UseBinary = true;
+                mlsdRequest.KeepAlive = true;
+
+                using var mlsdResponse = (FtpWebResponse)mlsdRequest.GetResponse();
+                using var mlsdStream = mlsdResponse.GetResponseStream();
+                using var mlsdReader = new StreamReader(mlsdStream);
+
+                while (!mlsdReader.EndOfStream)
+                {
+                    var line = mlsdReader.ReadLine();
+                    if (string.IsNullOrEmpty(line))
+                        continue;
+
+                    var item = ParseMLSDLine(line, currentPath);
+                    if (item != null && item.Name != "." && item.Name != "..")
+                    {
+                        items.Add(item);
+                    }
+                }
+                return items;
+            }
+            catch
+            {
+                // MLSD not supported, fall back to LIST
+            }
+
+            // Try LIST -al (detailed listing)
             try
             {
                 var detailsRequest = (FtpWebRequest)WebRequest.Create(ftpUri);
                 detailsRequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
                 detailsRequest.Credentials = new NetworkCredential(username, password);
                 detailsRequest.UseBinary = true;
-                detailsRequest.KeepAlive = false;
+                detailsRequest.KeepAlive = true;
 
                 using var detailsResponse = (FtpWebResponse)detailsRequest.GetResponse();
                 using var detailsStream = detailsResponse.GetResponseStream();
@@ -174,65 +242,130 @@ namespace Arma_3_LTRM.Services
                         items.Add(item);
                     }
                 }
+                return items;
             }
             catch
             {
-                try
+                // Fall back to simple listing with size checks
+            }
+
+            // Fallback: Simple listing (slowest)
+            try
+            {
+                var listRequest = (FtpWebRequest)WebRequest.Create(ftpUri);
+                listRequest.Method = WebRequestMethods.Ftp.ListDirectory;
+                listRequest.Credentials = new NetworkCredential(username, password);
+                listRequest.UseBinary = true;
+                listRequest.KeepAlive = true;
+
+                using var listResponse = (FtpWebResponse)listRequest.GetResponse();
+                using var listStream = listResponse.GetResponseStream();
+                using var listReader = new StreamReader(listStream);
+
+                var fileNames = new List<string>();
+                while (!listReader.EndOfStream)
                 {
-                    var listRequest = (FtpWebRequest)WebRequest.Create(ftpUri);
-                    listRequest.Method = WebRequestMethods.Ftp.ListDirectory;
-                    listRequest.Credentials = new NetworkCredential(username, password);
-                    listRequest.UseBinary = true;
-                    listRequest.KeepAlive = false;
+                    var fileName = listReader.ReadLine();
+                    if (!string.IsNullOrEmpty(fileName) && fileName != "." && fileName != "..")
+                        fileNames.Add(fileName);
+                }
 
-                    using var listResponse = (FtpWebResponse)listRequest.GetResponse();
-                    using var listStream = listResponse.GetResponseStream();
-                    using var listReader = new StreamReader(listStream);
+                // Batch check file types
+                var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = _maxConcurrentDownloads };
+                var itemsList = new ConcurrentBag<FtpItem>();
 
-                    while (!listReader.EndOfStream)
+                Parallel.ForEach(fileNames, parallelOptions, fileName =>
+                {
+                    var itemPath = currentPath.TrimEnd('/') + "/" + fileName;
+                    var itemUri = new Uri(ftpUri, fileName);
+                    var item = new FtpItem
                     {
-                        var fileName = listReader.ReadLine();
-                        if (string.IsNullOrEmpty(fileName) || fileName == "." || fileName == "..")
-                            continue;
+                        Name = fileName,
+                        FullPath = itemPath
+                    };
 
-                        var itemPath = currentPath.TrimEnd('/') + "/" + fileName;
-                        var itemUri = new Uri(ftpUri, fileName);
-                        var item = new FtpItem 
-                        { 
-                            Name = fileName,
-                            FullPath = itemPath
-                        };
+                    try
+                    {
+                        var sizeRequest = (FtpWebRequest)WebRequest.Create(itemUri);
+                        sizeRequest.Method = WebRequestMethods.Ftp.GetFileSize;
+                        sizeRequest.Credentials = new NetworkCredential(username, password);
+                        sizeRequest.UseBinary = true;
+                        sizeRequest.KeepAlive = true;
+                        sizeRequest.Timeout = 5000;
 
-                        try
-                        {
-                            var sizeRequest = (FtpWebRequest)WebRequest.Create(itemUri);
-                            sizeRequest.Method = WebRequestMethods.Ftp.GetFileSize;
-                            sizeRequest.Credentials = new NetworkCredential(username, password);
-                            sizeRequest.UseBinary = true;
-                            sizeRequest.KeepAlive = false;
-                            sizeRequest.Timeout = 5000;
-
-                            using var sizeResponse = (FtpWebResponse)sizeRequest.GetResponse();
-                            item.Size = sizeResponse.ContentLength;
-                            item.IsDirectory = false;
-                            item.LastModified = DateTime.MinValue;
-                        }
-                        catch
-                        {
-                            item.IsDirectory = true;
-                            item.Size = 0;
-                            item.LastModified = DateTime.MinValue;
-                        }
-
-                        items.Add(item);
+                        using var sizeResponse = (FtpWebResponse)sizeRequest.GetResponse();
+                        item.Size = sizeResponse.ContentLength;
+                        item.IsDirectory = false;
+                        item.LastModified = DateTime.MinValue;
                     }
-                }
-                catch
-                {
-                }
+                    catch
+                    {
+                        item.IsDirectory = true;
+                        item.Size = 0;
+                        item.LastModified = DateTime.MinValue;
+                    }
+
+                    itemsList.Add(item);
+                });
+
+                items = itemsList.ToList();
+            }
+            catch
+            {
             }
 
             return items;
+        }
+
+        private FtpItem? ParseMLSDLine(string line, string currentPath)
+        {
+            try
+            {
+                // MLSD format: "type=dir;size=0;modify=20231201120000; folderName"
+                var parts = line.Split(new[] { "; " }, 2, StringSplitOptions.None);
+                if (parts.Length < 2)
+                    return null;
+
+                var facts = parts[0];
+                var name = parts[1];
+
+                var item = new FtpItem
+                {
+                    Name = name,
+                    FullPath = currentPath.TrimEnd('/') + "/" + name
+                };
+
+                var factPairs = facts.Split(';');
+                foreach (var fact in factPairs)
+                {
+                    var kv = fact.Split('=');
+                    if (kv.Length != 2) continue;
+
+                    var key = kv[0].ToLower().Trim();
+                    var value = kv[1].Trim();
+
+                    switch (key)
+                    {
+                        case "type":
+                            item.IsDirectory = value.ToLower() == "dir" || value.ToLower() == "cdir" || value.ToLower() == "pdir";
+                            break;
+                        case "size":
+                            if (long.TryParse(value, out long size))
+                                item.Size = size;
+                            break;
+                        case "modify":
+                            if (DateTime.TryParseExact(value, "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out DateTime dt))
+                                item.LastModified = dt;
+                            break;
+                    }
+                }
+
+                return item;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private FtpItem? ParseListLineOptimized(string line, string currentPath)
@@ -511,13 +644,14 @@ namespace Arma_3_LTRM.Services
                 request.Method = WebRequestMethods.Ftp.DownloadFile;
                 request.Credentials = new NetworkCredential(username, password);
                 request.UseBinary = true;
-                request.KeepAlive = false;
+                request.KeepAlive = true;
+                request.UsePassive = true;
 
                 using var response = (FtpWebResponse)request.GetResponse();
                 using var responseStream = response.GetResponseStream();
                 using var fileStream = File.Create(destinationPath);
 
-                byte[] buffer = new byte[8192];
+                byte[] buffer = new byte[_bufferSize];
                 long totalBytesRead = 0;
                 int bytesRead;
                 int lastReportedPercent = -1;
@@ -532,7 +666,6 @@ namespace Arma_3_LTRM.Services
                         int currentPercent = (int)((totalBytesRead * 100) / fileSize);
                         if (currentPercent != lastReportedPercent && currentPercent % 25 == 0)
                         {
-                            progress?.Report($"  Progress: {currentPercent}% ({FormatFileSize(totalBytesRead)}/{FormatFileSize(fileSize)})");
                             lastReportedPercent = currentPercent;
                         }
                     }
@@ -544,8 +677,6 @@ namespace Arma_3_LTRM.Services
                 {
                     File.SetLastWriteTime(destinationPath, remoteTimestamp);
                 }
-
-                progress?.Report($"  Completed: {Path.GetFileName(destinationPath)}");
             }
             catch (Exception ex)
             {
