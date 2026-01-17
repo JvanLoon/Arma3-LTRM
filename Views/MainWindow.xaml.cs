@@ -23,6 +23,7 @@ namespace Arma_3_LTRM.Views
 
             _repositoryManager = new RepositoryManager();
             _eventManager = new EventManager();
+            _eventManager.Initialize(_repositoryManager);
             _settingsManager = new SettingsManager();
             _ftpManager = new FtpManager();
 
@@ -35,6 +36,56 @@ namespace Arma_3_LTRM.Views
             EventsListBox.ItemsSource = _eventManager.Events;
             ManageRepositoriesListBox.ItemsSource = _repositoryManager.Repositories;
             ManageEventsListBox.ItemsSource = _eventManager.Events;
+            LoadSettings();
+        }
+
+        private void LoadSettings()
+        {
+            SettingsArma3PathTextBox.Text = _settingsManager.Settings.Arma3ExePath;
+            SettingsBaseDownloadPathTextBox.Text = _settingsManager.Settings.BaseDownloadLocation;
+        }
+
+        private void SettingsBrowseArma3_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Arma 3 Executable|arma3_x64.exe;arma3.exe|All Files|*.*",
+                Title = "Select Arma 3 Executable"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                SettingsArma3PathTextBox.Text = dialog.FileName;
+            }
+        }
+
+        private void SettingsBrowseDownload_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "Select Base Download Location",
+                FileName = "Select Folder",
+                Filter = "Folder|*.folder"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var folderPath = Path.GetDirectoryName(dialog.FileName);
+                if (!string.IsNullOrEmpty(folderPath))
+                {
+                    SettingsBaseDownloadPathTextBox.Text = folderPath;
+                }
+            }
+        }
+
+        private void SettingsSave_Click(object sender, RoutedEventArgs e)
+        {
+            _settingsManager.Settings.Arma3ExePath = SettingsArma3PathTextBox.Text;
+            _settingsManager.Settings.BaseDownloadLocation = SettingsBaseDownloadPathTextBox.Text;
+            _settingsManager.SaveSettings();
+
+            MessageBox.Show("Settings saved successfully!", "Settings Saved", 
+                MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void MenuSettings_Click(object sender, RoutedEventArgs e)
@@ -177,7 +228,7 @@ namespace Arma_3_LTRM.Views
 
                 foreach (var modFolder in evt.ModFolders)
                 {
-                    var repository = _repositoryManager.Repositories.FirstOrDefault(r => r.Id == modFolder.RepositoryId);
+                    var repository = evt.Repositories.FirstOrDefault(r => r.Id == modFolder.RepositoryId);
                     if (repository == null)
                     {
                         progressWindow.Close();
@@ -228,7 +279,7 @@ namespace Arma_3_LTRM.Views
 
                 foreach (var modFolder in evt.ModFolders)
                 {
-                    var repository = _repositoryManager.Repositories.FirstOrDefault(r => r.Id == modFolder.RepositoryId);
+                    var repository = evt.Repositories.FirstOrDefault(r => r.Id == modFolder.RepositoryId);
                     if (repository == null)
                     {
                         progressWindow.Close();
@@ -411,7 +462,7 @@ namespace Arma_3_LTRM.Views
             if (string.IsNullOrWhiteSpace(_settingsManager.Settings.Arma3ExePath) || 
                 !File.Exists(_settingsManager.Settings.Arma3ExePath))
             {
-                MessageBox.Show("Arma 3 executable path is not set or invalid.\n\nPlease configure it in Settings (File ? Settings).", 
+                MessageBox.Show("Arma 3 executable path is not set or invalid.\n\nPlease configure it in the Settings tab.", 
                     "Arma 3 Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return false;
             }

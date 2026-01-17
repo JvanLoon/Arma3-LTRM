@@ -9,11 +9,17 @@ namespace Arma_3_LTRM.Services
     {
         private const string SETTINGS_FOLDER = "Settings";
         private const string EVENTS_FOLDER = "Events";
+        private RepositoryManager? _repositoryManager;
         public ObservableCollection<Event> Events { get; private set; }
 
         public EventManager()
         {
             Events = new ObservableCollection<Event>();
+        }
+
+        public void Initialize(RepositoryManager repositoryManager)
+        {
+            _repositoryManager = repositoryManager;
             LoadEvents();
         }
 
@@ -95,6 +101,7 @@ namespace Arma_3_LTRM.Services
                         var eventItem = JsonSerializer.Deserialize<Event>(json);
                         if (eventItem != null)
                         {
+                            MigrateEventRepositories(eventItem);
                             Events.Add(eventItem);
                         }
                     }
@@ -107,6 +114,37 @@ namespace Arma_3_LTRM.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading events: {ex.Message}");
+            }
+        }
+
+        private void MigrateEventRepositories(Event eventItem)
+        {
+            if (_repositoryManager == null)
+                return;
+
+            // Migrate old events that don't have a Repositories collection
+            if (eventItem.Repositories.Count == 0)
+            {
+                var uniqueRepoIds = eventItem.ModFolders
+                    .Select(mf => mf.RepositoryId)
+                    .Where(id => id != Guid.Empty)
+                    .Distinct()
+                    .ToList();
+
+                foreach (var repoId in uniqueRepoIds)
+                {
+                    var repo = _repositoryManager.Repositories.FirstOrDefault(r => r.Id == repoId);
+                    if (repo != null)
+                    {
+                        eventItem.Repositories.Add(repo);
+                    }
+                }
+
+                // Save the migrated event
+                if (eventItem.Repositories.Count > 0)
+                {
+                    SaveEvent(eventItem);
+                }
             }
         }
 

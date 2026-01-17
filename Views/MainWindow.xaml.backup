@@ -1,0 +1,280 @@
+<Window x:Class="Arma_3_LTRM.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Arma 3 LTRM - Lowlands Tactical Repo Manager" 
+        Height="700" Width="1200"
+        MinHeight="600" MinWidth="1000"
+        WindowStartupLocation="CenterScreen"
+        Background="#1E1E1E">
+    
+    <Window.Resources>
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Name="Border" BorderThickness="0" Background="#2D2D30" Margin="2,0">
+                            <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                            ContentSource="Header" Margin="20,10"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#0E639C"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#3E3E42"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="#1177BB"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style TargetType="Button" x:Key="ActionButton">
+            <Setter Property="Background" Value="#0E639C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1177BB"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#3F3F46"/>
+                    <Setter Property="Foreground" Value="#808080"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="#252526"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="BorderBrush" Value="#3F3F46"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0" Background="#2D2D30" Foreground="#E0E0E0">
+            <MenuItem Header="File">
+                <MenuItem Header="Settings" Click="MenuSettings_Click"/>
+                <Separator/>
+                <MenuItem Header="Exit" Click="MenuExit_Click"/>
+            </MenuItem>
+            <MenuItem Header="Help">
+                <MenuItem Header="About" Click="MenuAbout_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <TabControl Grid.Row="1">
+            <TabItem Header="Home">
+                <Grid Background="#1E1E1E" Margin="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="REPOSITORIES" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                        
+                        <ListBox x:Name="RepositoriesListBox" Height="400" Margin="0,0,0,15"
+                                 SelectionMode="Extended">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="??" FontSize="20" Margin="0,0,10,0"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
+                                            <TextBlock Text="{Binding Url}" Foreground="#999" FontSize="12"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <StackPanel>
+                            <Button Style="{StaticResource ActionButton}" Content="Download &amp; Launch Repository" 
+                                    Click="DownloadLaunchRepository_Click" Margin="0,0,0,10"/>
+                            <Button Style="{StaticResource ActionButton}" Content="Download Repository" 
+                                    Click="DownloadRepository_Click" Margin="0,0,0,10"/>
+                            <Button Style="{StaticResource ActionButton}" Content="Launch with Repository" 
+                                    Click="LaunchRepository_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="EVENTS" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                        
+                        <ListBox x:Name="EventsListBox" Height="400" Margin="0,0,0,15"
+                                 SelectionMode="Extended">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="??" FontSize="20" Margin="0,0,10,0"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
+                                            <TextBlock Foreground="#999" FontSize="12">
+                                                <Run Text="{Binding ModFolders.Count, Mode=OneWay}"/>
+                                                <Run Text=" mod folder(s)"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <StackPanel>
+                            <Button Style="{StaticResource ActionButton}" Content="Download &amp; Launch Event" 
+                                    Click="DownloadLaunchEvent_Click" Margin="0,0,0,10"/>
+                            <Button Style="{StaticResource ActionButton}" Content="Download Event" 
+                                    Click="DownloadEvent_Click" Margin="0,0,0,10"/>
+                            <Button Style="{StaticResource ActionButton}" Content="Launch with Event" 
+                                    Click="LaunchEvent_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Manage Repositories">
+                <Grid Background="#1E1E1E" Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListBox x:Name="ManageRepositoriesListBox" Grid.Row="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
+                                        <TextBlock Foreground="#999">
+                                            <Run Text="{Binding Url}"/>
+                                            <Run Text=":"/>
+                                            <Run Text="{Binding Port}"/>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding Username}" Foreground="#999" FontSize="12"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Edit" Style="{StaticResource ActionButton}"
+                                            Margin="10,0" Padding="15,5" Click="EditRepository_Click" Tag="{Binding}"/>
+                                    <Button Grid.Column="2" Content="Delete" Padding="15,5"
+                                            Click="DeleteRepository_Click" Tag="{Binding}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource ActionButton}">
+                                                <Setter Property="Background" Value="#B73A3A"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#D84848"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                        <Button Style="{StaticResource ActionButton}" Content="Add Repository" Click="AddRepository_Click" Width="150"/>
+                        <Button Style="{StaticResource ActionButton}" Content="Test Connection" Click="TestRepositoryConnection_Click" 
+                                Width="150" Margin="10,0,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Manage Events">
+                <Grid Background="#1E1E1E" Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListBox x:Name="ManageEventsListBox" Grid.Row="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
+                                        <TextBlock Foreground="#999">
+                                            <Run Text="{Binding ModFolders.Count, Mode=OneWay}"/>
+                                            <Run Text=" mod folder(s)"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Edit" Style="{StaticResource ActionButton}"
+                                            Margin="10,0" Padding="15,5" Click="EditEvent_Click" Tag="{Binding}"/>
+                                    <Button Grid.Column="2" Content="Delete" Padding="15,5"
+                                            Click="DeleteEvent_Click" Tag="{Binding}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource ActionButton}">
+                                                <Setter Property="Background" Value="#B73A3A"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#D84848"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                        <Button Style="{StaticResource ActionButton}" Content="Add Event" Click="AddEvent_Click" Width="150"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

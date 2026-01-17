@@ -12,9 +12,15 @@ namespace Arma_3_LTRM.Services
         private class FtpItem
         {
             public string Name { get; set; } = string.Empty;
+            public string FullPath { get; set; } = string.Empty;
             public bool IsDirectory { get; set; }
             public long Size { get; set; }
             public DateTime LastModified { get; set; }
+        }
+
+        private class FtpDirectoryCache
+        {
+            public Dictionary<string, List<FtpItem>> Cache { get; } = new Dictionary<string, List<FtpItem>>();
         }
 
         private int _skippedFiles = 0;
@@ -39,9 +45,15 @@ namespace Arma_3_LTRM.Services
                     return false;
                 }
 
-                progress?.Report("Connection successful. Starting sync...");
+                progress?.Report("Connection successful. Building folder structure cache...");
                 
-                await Task.Run(() => DownloadDirectory(ftpUri, repository.Username, repository.Password, destinationPath, progress));
+                // Build complete directory cache upfront
+                var cache = await Task.Run(() => BuildDirectoryCache(ftpUri, repository.Username, repository.Password, "/", progress));
+                
+                progress?.Report($"Cache built. Found {cache.Cache.Values.Sum(x => x.Count(i => !i.IsDirectory))} files in {cache.Cache.Count} directories.");
+                progress?.Report("Starting download...");
+                
+                await Task.Run(() => DownloadDirectoryFromCache(cache, "/", repository.Username, repository.Password, destinationPath, ftpUri.Host, ftpUri.Port, progress));
                 
                 progress?.Report($"Sync completed: {_downloadedFiles} files downloaded, {_skippedFiles} files up-to-date");
                 return true;
@@ -52,6 +64,228 @@ namespace Arma_3_LTRM.Services
                 MessageBox.Show($"Failed to download from repository '{repository.Name}': {ex.Message}", 
                     "Download Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
+            }
+        }
+
+        private FtpDirectoryCache BuildDirectoryCache(Uri ftpUri, string username, string password, string currentPath, IProgress<string>? progress)
+        {
+            var cache = new FtpDirectoryCache();
+            BuildDirectoryCacheRecursive(ftpUri, username, password, currentPath, cache, progress);
+            return cache;
+        }
+
+        private void BuildDirectoryCacheRecursive(Uri baseUri, string username, string password, string currentPath, FtpDirectoryCache cache, IProgress<string>? progress)
+        {
+            try
+            {
+                var ftpUri = new Uri($"{baseUri.Scheme}://{baseUri.Host}:{baseUri.Port}{currentPath}");
+                if (!ftpUri.AbsolutePath.EndsWith("/"))
+                {
+                    ftpUri = new Uri(ftpUri.ToString() + "/");
+                }
+
+                progress?.Report($"Scanning: {currentPath}");
+
+                var items = GetDirectoryListingOptimized(ftpUri, username, password, currentPath);
+                cache.Cache[currentPath] = items;
+
+                foreach (var item in items.Where(i => i.IsDirectory && i.Name != "." && i.Name != ".."))
+                {
+                    BuildDirectoryCacheRecursive(baseUri, username, password, item.FullPath, cache, progress);
+                }
+            }
+            catch (Exception ex)
+            {
+                progress?.Report($"Error scanning {currentPath}: {ex.Message}");
+            }
+        }
+
+        private void DownloadDirectoryFromCache(FtpDirectoryCache cache, string currentPath, string username, string password, string destinationPath, string ftpHost, int ftpPort, IProgress<string>? progress)
+        {
+            try
+            {
+                if (!Directory.Exists(destinationPath))
+                {
+                    Directory.CreateDirectory(destinationPath);
+                    progress?.Report($"Created directory: {Path.GetFileName(destinationPath)}");
+                }
+
+                if (!cache.Cache.TryGetValue(currentPath, out var items))
+                    return;
+
+                foreach (var item in items)
+                {
+                    if (item.Name == "." || item.Name == "..")
+                        continue;
+
+                    var localPath = Path.Combine(destinationPath, item.Name);
+
+                    if (item.IsDirectory)
+                    {
+                        DownloadDirectoryFromCache(cache, item.FullPath, username, password, localPath, ftpHost, ftpPort, progress);
+                    }
+                    else
+                    {
+                        if (ShouldDownloadFile(localPath, item.Size, item.LastModified))
+                        {
+                            progress?.Report($"Downloading: {item.Name} ({FormatFileSize(item.Size)})");
+                            var itemUri = new Uri($"ftp://{ftpHost}:{ftpPort}{item.FullPath}");
+                            DownloadFileWithProgress(itemUri, username, password, localPath, item.Size, item.LastModified, progress);
+                            _downloadedFiles++;
+                        }
+                        else
+                        {
+                            _skippedFiles++;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                progress?.Report($"Error downloading {currentPath}: {ex.Message}");
+            }
+        }
+
+        private List<FtpItem> GetDirectoryListingOptimized(Uri ftpUri, string username, string password, string currentPath)
+        {
+            var items = new List<FtpItem>();
+
+            try
+            {
+                var detailsRequest = (FtpWebRequest)WebRequest.Create(ftpUri);
+                detailsRequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
+                detailsRequest.Credentials = new NetworkCredential(username, password);
+                detailsRequest.UseBinary = true;
+                detailsRequest.KeepAlive = false;
+
+                using var detailsResponse = (FtpWebResponse)detailsRequest.GetResponse();
+                using var detailsStream = detailsResponse.GetResponseStream();
+                using var detailsReader = new StreamReader(detailsStream);
+
+                while (!detailsReader.EndOfStream)
+                {
+                    var line = detailsReader.ReadLine();
+                    if (string.IsNullOrEmpty(line))
+                        continue;
+
+                    var item = ParseListLineOptimized(line, currentPath);
+                    if (item != null && item.Name != "." && item.Name != "..")
+                    {
+                        items.Add(item);
+                    }
+                }
+            }
+            catch
+            {
+                try
+                {
+                    var listRequest = (FtpWebRequest)WebRequest.Create(ftpUri);
+                    listRequest.Method = WebRequestMethods.Ftp.ListDirectory;
+                    listRequest.Credentials = new NetworkCredential(username, password);
+                    listRequest.UseBinary = true;
+                    listRequest.KeepAlive = false;
+
+                    using var listResponse = (FtpWebResponse)listRequest.GetResponse();
+                    using var listStream = listResponse.GetResponseStream();
+                    using var listReader = new StreamReader(listStream);
+
+                    while (!listReader.EndOfStream)
+                    {
+                        var fileName = listReader.ReadLine();
+                        if (string.IsNullOrEmpty(fileName) || fileName == "." || fileName == "..")
+                            continue;
+
+                        var itemPath = currentPath.TrimEnd('/') + "/" + fileName;
+                        var itemUri = new Uri(ftpUri, fileName);
+                        var item = new FtpItem 
+                        { 
+                            Name = fileName,
+                            FullPath = itemPath
+                        };
+
+                        try
+                        {
+                            var sizeRequest = (FtpWebRequest)WebRequest.Create(itemUri);
+                            sizeRequest.Method = WebRequestMethods.Ftp.GetFileSize;
+                            sizeRequest.Credentials = new NetworkCredential(username, password);
+                            sizeRequest.UseBinary = true;
+                            sizeRequest.KeepAlive = false;
+                            sizeRequest.Timeout = 5000;
+
+                            using var sizeResponse = (FtpWebResponse)sizeRequest.GetResponse();
+                            item.Size = sizeResponse.ContentLength;
+                            item.IsDirectory = false;
+                            item.LastModified = DateTime.MinValue;
+                        }
+                        catch
+                        {
+                            item.IsDirectory = true;
+                            item.Size = 0;
+                            item.LastModified = DateTime.MinValue;
+                        }
+
+                        items.Add(item);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            return items;
+        }
+
+        private FtpItem? ParseListLineOptimized(string line, string currentPath)
+        {
+            try
+            {
+                if (line.Length < 10)
+                    return null;
+
+                var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length < 9)
+                    return null;
+
+                var item = new FtpItem();
+                
+                if (line[0] == 'd')
+                {
+                    item.IsDirectory = true;
+                    item.Size = 0;
+                }
+                else
+                {
+                    item.IsDirectory = false;
+                    if (parts.Length > 4 && long.TryParse(parts[4], out long size))
+                    {
+                        item.Size = size;
+                    }
+                }
+
+                item.Name = string.Join(" ", parts.Skip(8));
+                item.FullPath = currentPath.TrimEnd('/') + "/" + item.Name;
+                item.LastModified = DateTime.MinValue;
+
+                try
+                {
+                    if (parts.Length >= 8)
+                    {
+                        var dateStr = $"{parts[5]} {parts[6]} {parts[7]}";
+                        if (DateTime.TryParse(dateStr, out DateTime parsed))
+                        {
+                            item.LastModified = parsed;
+                        }
+                    }
+                }
+                catch
+                {
+                }
+
+                return item;
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -409,14 +643,26 @@ namespace Arma_3_LTRM.Services
             {
                 try
                 {
+                    _skippedFiles = 0;
+                    _downloadedFiles = 0;
+
                     var ftpUri = new Uri($"ftp://{ftpUrl}:{port}{remotePath}");
                     if (!ftpUri.AbsolutePath.EndsWith("/"))
                     {
                         ftpUri = new Uri(ftpUri.ToString() + "/");
                     }
 
+                    progress?.Report($"Building folder structure cache for: {remotePath}");
+                    
+                    var baseUri = new Uri($"ftp://{ftpUrl}:{port}/");
+                    var cache = BuildDirectoryCache(baseUri, username, password, remotePath, progress);
+                    
+                    progress?.Report($"Cache built. Found {cache.Cache.Values.Sum(x => x.Count(i => !i.IsDirectory))} files.");
                     progress?.Report($"Downloading folder: {remotePath}");
-                    DownloadDirectory(ftpUri, username, password, localPath, progress);
+                    
+                    DownloadDirectoryFromCache(cache, remotePath, username, password, localPath, ftpUrl, port, progress);
+                    
+                    progress?.Report($"Folder download completed: {_downloadedFiles} files downloaded, {_skippedFiles} files up-to-date");
                 }
                 catch (Exception ex)
                 {

@@ -49,7 +49,7 @@ namespace Arma_3_LTRM.Views
             _displayItems.Clear();
             foreach (var modFolder in Event.ModFolders)
             {
-                var repo = _repositoryManager.Repositories.FirstOrDefault(r => r.Id == modFolder.RepositoryId);
+                var repo = Event.Repositories.FirstOrDefault(r => r.Id == modFolder.RepositoryId);
                 _displayItems.Add(new ModFolderDisplayItem
                 {
                     ModFolder = modFolder,
@@ -185,6 +185,12 @@ namespace Arma_3_LTRM.Views
                 if (Event.ModFolders.Any(mf => mf.FolderPath == item.FullPath && 
                                                mf.RepositoryId == _currentBrowsingRepo.Id))
                     continue;
+
+                // Add repository to event's repositories collection if not already there
+                if (!Event.Repositories.Any(r => r.Id == _currentBrowsingRepo.Id))
+                {
+                    Event.Repositories.Add(_currentBrowsingRepo);
+                }
 
                 var modFolder = new ModFolder
                 {

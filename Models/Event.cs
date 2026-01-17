@@ -6,6 +6,7 @@ namespace Arma_3_LTRM.Models
     public class Event : INotifyPropertyChanged
     {
         private string _name;
+        private ObservableCollection<Repository> _repositories;
         private ObservableCollection<ModFolder> _modFolders;
 
         public string Name
@@ -17,6 +18,19 @@ namespace Arma_3_LTRM.Models
                 {
                     _name = value;
                     OnPropertyChanged(nameof(Name));
+                }
+            }
+        }
+
+        public ObservableCollection<Repository> Repositories
+        {
+            get => _repositories;
+            set
+            {
+                if (_repositories != value)
+                {
+                    _repositories = value;
+                    OnPropertyChanged(nameof(Repositories));
                 }
             }
         }
@@ -37,6 +51,7 @@ namespace Arma_3_LTRM.Models
         public Event()
         {
             _name = string.Empty;
+            _repositories = new ObservableCollection<Repository>();
             _modFolders = new ObservableCollection<ModFolder>();
         }
 

@@ -32,6 +32,59 @@ namespace Arma_3_LTRM.Services
         public void UpdateRepository(Repository repository)
         {
             SaveRepositories();
+            UpdateRepositoryInAllEvents(repository);
+        }
+
+        private void UpdateRepositoryInAllEvents(Repository repository)
+        {
+            try
+            {
+                var eventsPath = Path.Combine(SETTINGS_FOLDER, "Events");
+                if (!Directory.Exists(eventsPath))
+                {
+                    return;
+                }
+
+                var eventFiles = Directory.GetFiles(eventsPath, "*.json");
+                foreach (var eventFile in eventFiles)
+                {
+                    try
+                    {
+                        var json = File.ReadAllText(eventFile);
+                        var eventItem = JsonSerializer.Deserialize<Event>(json);
+                        
+                        if (eventItem != null)
+                        {
+                            bool updated = false;
+                            var repoToUpdate = eventItem.Repositories.FirstOrDefault(r => r.Id == repository.Id);
+                            if (repoToUpdate != null)
+                            {
+                                var index = eventItem.Repositories.IndexOf(repoToUpdate);
+                                eventItem.Repositories[index] = repository;
+                                updated = true;
+                            }
+
+                            if (updated)
+                            {
+                                var options = new JsonSerializerOptions
+                                {
+                                    WriteIndented = true
+                                };
+                                var updatedJson = JsonSerializer.Serialize(eventItem, options);
+                                File.WriteAllText(eventFile, updatedJson);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error updating repository in event file {eventFile}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating repository in events: {ex.Message}");
+            }
         }
 
         public List<Repository> GetEnabledRepositories()

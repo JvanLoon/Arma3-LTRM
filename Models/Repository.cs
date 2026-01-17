@@ -5,7 +5,7 @@ namespace Arma_3_LTRM.Models
     public class Repository : INotifyPropertyChanged
     {
         private Guid _id;
-        private bool _isEnabled;
+        private bool _isEnabled = true;
         private string _name;
         private string _url;
         private int _port;
@@ -105,6 +105,7 @@ namespace Arma_3_LTRM.Models
 
         public Repository()
         {
+            _id = Guid.NewGuid();
             _name = string.Empty;
             _url = string.Empty;
             _port = 21;
