@@ -21,6 +21,14 @@ namespace Arma_3_LTRM
             }
         }
 
+        public void RemoveMod(string modPath)
+        {
+            if (Modlist.Contains(modPath))
+            {
+                Modlist.Remove(modPath);
+            }
+        }
+
         public void AddStartupMod(string modPath)
         {
             if (!StartupModsList.Contains(modPath))
@@ -92,6 +100,21 @@ namespace Arma_3_LTRM
 
                 treeView.Items.Add(treeViewItem);
             }
+        }
+
+        public List<string> GetCheckedStartupMods(TreeView treeView)
+        {
+            var checkedMods = new List<string>();
+
+            foreach (TreeViewItem item in treeView.Items)
+            {
+                if (item.Header is CheckBox checkBox && checkBox.IsChecked == true)
+                {
+                    checkedMods.Add(checkBox.Tag as string ?? string.Empty);
+                }
+            }
+
+            return checkedMods;
         }
 
         public string FindModStartDirectory(TreeViewItem item)

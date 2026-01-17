@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Diagnostics;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
@@ -19,8 +20,10 @@ namespace Arma_3_LTRM
     public partial class MainWindow : Window
     {
         private const string ARMA3_EXE_NAME = "arma3.exe";
-        
+        private const string ARMA3_LTSYNC_FOLDER_NAME = "ARMA3_LTSYNC";
+
         private readonly ModManager _modManager;
+        private readonly LaunchParametersManager _launchParametersManager;
         private string _armaExeLocation = string.Empty;
         private Point _dragStartPoint;
         private bool _isDragging;
@@ -29,12 +32,119 @@ namespace Arma_3_LTRM
         {
             InitializeComponent();
             _modManager = new ModManager();
+            _launchParametersManager = new LaunchParametersManager();
+            _launchParametersManager.ParametersChanged += OnParametersChanged;
             SelectArmaExecutable();
+            UpdateRunParametersDisplay();
         }
 
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void LaunchOption_Changed(object sender, RoutedEventArgs e)
+        {
+            _launchParametersManager.SetParameter("windowed", WindowedCheckBox.IsChecked == true);
+            _launchParametersManager.SetParameter("world", EmptyWorldCheckBox.IsChecked == true);
+            _launchParametersManager.SetParameter("skipIntro", SkipIntroCheckBox.IsChecked == true);
+            _launchParametersManager.SetParameter("nosplash", NoSplashCheckBox.IsChecked == true);
+            _launchParametersManager.SetParameter("noPause", NoPauseCheckBox.IsChecked == true);
+            _launchParametersManager.SetParameter("noPauseAudio", NoPauseAudioCheckBox.IsChecked == true);
+            _launchParametersManager.SetParameter("noLogs", NoLogsCheckBox.IsChecked == true);
+            _launchParametersManager.SetParameter("showScriptErrors", ShowScriptErrorsCheckBox.IsChecked == true);
+            _launchParametersManager.SetParameter("filePatching", FilePatchingCheckBox.IsChecked == true);
+            UpdateModParameters();
+        }
+
+        private void AdditionalParametersTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateRunParametersDisplay();
+        }
+
+        private void OnParametersChanged(object? sender, EventArgs e)
+        {
+            UpdateRunParametersDisplay();
+        }
+
+        private void UpdateRunParametersDisplay()
+        {
+            var parameters = _launchParametersManager.GetParametersList();
+            
+            if (!string.IsNullOrWhiteSpace(AdditionalParametersTextBox?.Text))
+            {
+                var additionalParams = AdditionalParametersTextBox.Text
+                    .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim())
+                    .Where(p => !string.IsNullOrWhiteSpace(p));
+                parameters.AddRange(additionalParams);
+            }
+
+            RunParametersTextBlock.Text = string.Join(Environment.NewLine, parameters);
+        }
+
+        private void UpdateModParameters()
+        {
+            var checkedMods = _modManager.GetCheckedStartupMods(StarupModsListTreeView);
+            _launchParametersManager.UpdateModsList(checkedMods);
+        }
+
+        private void LaunchButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_armaExeLocation) || !File.Exists(_armaExeLocation))
+            {
+                MessageBox.Show("Arma 3 executable not found. Please restart the application and select a valid arma3.exe file.", 
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                var parameterString = _launchParametersManager.GetParametersString();
+                
+                if (!string.IsNullOrWhiteSpace(AdditionalParametersTextBox?.Text))
+                {
+                    var additionalParams = AdditionalParametersTextBox.Text
+                        .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(p => p.Trim())
+                        .Where(p => !string.IsNullOrWhiteSpace(p));
+                    parameterString += " " + string.Join(" ", additionalParams);
+                }
+
+                if (AdditionalParametersTextBox!= null && !string.IsNullOrWhiteSpace(AdditionalParametersTextBox.Text))
+                {
+                    var additionalParams = AdditionalParametersTextBox.Text
+                        .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(p => p.Trim())
+                        .Where(p => !string.IsNullOrWhiteSpace(p));
+                    parameterString += " " + string.Join(" ", additionalParams);
+                }
+
+                // Create temp folder with ARMA3_LTSYNC parent folder and date subfolder
+                string tempPath = Path.GetTempPath();
+                string armaFolderPath = Path.Combine(tempPath, ARMA3_LTSYNC_FOLDER_NAME);
+                string dateFolder = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string tempFolderPath = Path.Combine(armaFolderPath, dateFolder);
+                Directory.CreateDirectory(tempFolderPath);
+
+                // Create parameter file
+                string parameterFilePath = Path.Combine(tempFolderPath, "parameters.txt");
+                File.WriteAllText(parameterFilePath, parameterString);
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = _armaExeLocation,
+                    Arguments = $"-par=\"{parameterFilePath}\"",
+                    UseShellExecute = false,
+                    WorkingDirectory = Path.GetDirectoryName(_armaExeLocation)
+                };
+
+                Process.Start(startInfo);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to launch Arma 3: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void SelectArmaExecutable()
@@ -79,6 +189,25 @@ namespace Arma_3_LTRM
                 _modManager.AddMod(dialog.FolderName);
                 _modManager.RefreshModListTreeView(ModListTreeView);
                 _modManager.PopulateAvailableAddonsTreeView(AvailableAddonsTreeView);
+            }
+        }
+
+        private void Remove_Folder_To_Modlist_Click(object sender, RoutedEventArgs e)
+        {
+
+            if (ModListTreeView.SelectedItem is TreeViewItem selectedItem)
+            {
+                string modPath = selectedItem.Tag as string;
+                if (!string.IsNullOrEmpty(modPath))
+                {
+                    _modManager.RemoveMod(modPath);
+                    _modManager.RefreshModListTreeView(ModListTreeView);
+                    _modManager.PopulateAvailableAddonsTreeView(AvailableAddonsTreeView);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select a mod folder to remove.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -128,7 +257,28 @@ namespace Arma_3_LTRM
                 string modPath = (string)e.Data.GetData(DataFormats.StringFormat);
                 _modManager.AddStartupMod(modPath);
                 _modManager.RefreshStartupModsTreeView(StarupModsListTreeView);
+                WireUpStartupModCheckboxes();
+                UpdateModParameters();
             }
+        }
+
+        private void WireUpStartupModCheckboxes()
+        {
+            foreach (TreeViewItem item in StarupModsListTreeView.Items)
+            {
+                if (item.Header is System.Windows.Controls.CheckBox checkBox)
+                {
+                    checkBox.Checked -= StartupModCheckBox_Changed;
+                    checkBox.Unchecked -= StartupModCheckBox_Changed;
+                    checkBox.Checked += StartupModCheckBox_Changed;
+                    checkBox.Unchecked += StartupModCheckBox_Changed;
+                }
+            }
+        }
+
+        private void StartupModCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateModParameters();
         }
     }
 }
