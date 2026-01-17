@@ -75,7 +75,37 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Repositories" FontFamily="Calibri">
-                <Grid Background="#FFE5E5E5"/>
+                <Grid Background="#FFE5E5E5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <ListView x:Name="RepositoriesListView" Grid.Column="0" Margin="10">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Width="30">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsEnabled}" HorizontalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Repository Name" Width="200" DisplayMemberBinding="{Binding Name}"/>
+                                <GridViewColumn Header="URL" Width="250" DisplayMemberBinding="{Binding Url}"/>
+                                <GridViewColumn Header="Port" Width="60" DisplayMemberBinding="{Binding Port}"/>
+                                <GridViewColumn Header="Username" Width="120" DisplayMemberBinding="{Binding Username}"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                    
+                    <StackPanel Grid.Column="1" Margin="0,10,10,10" Width="120">
+                        <Button x:Name="AddRepositoryButton" Content="Add Repository" Margin="0,0,0,10" Height="30" Click="AddRepositoryButton_Click"/>
+                        <Button x:Name="EditRepositoryButton" Content="Edit Repository" Margin="0,0,0,10" Height="30" Click="EditRepositoryButton_Click"/>
+                        <Button x:Name="RemoveRepositoryButton" Content="Remove Repository" Margin="0,0,0,10" Height="30" Click="RemoveRepositoryButton_Click"/>
+                        <Button x:Name="RefreshRepositoryButton" Content="Refresh Repository" Margin="0,0,0,10" Height="30" Click="RefreshRepositoryButton_Click"/>
+                    </StackPanel>
+                </Grid>
             </TabItem>
         </TabControl>
 

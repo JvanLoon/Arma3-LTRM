@@ -24,6 +24,7 @@ namespace Arma_3_LTRM
 
         private readonly ModManager _modManager;
         private readonly LaunchParametersManager _launchParametersManager;
+        private readonly RepositoryManager _repositoryManager;
         private string _armaExeLocation = string.Empty;
         private Point _dragStartPoint;
         private bool _isDragging;
@@ -33,9 +34,16 @@ namespace Arma_3_LTRM
             InitializeComponent();
             _modManager = new ModManager();
             _launchParametersManager = new LaunchParametersManager();
+            _repositoryManager = new RepositoryManager();
             _launchParametersManager.ParametersChanged += OnParametersChanged;
             SelectArmaExecutable();
             UpdateRunParametersDisplay();
+            InitializeRepositoriesListView();
+        }
+
+        private void InitializeRepositoriesListView()
+        {
+            RepositoriesListView.ItemsSource = _repositoryManager.Repositories;
         }
 
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
@@ -89,13 +97,56 @@ namespace Arma_3_LTRM
             _launchParametersManager.UpdateModsList(checkedMods);
         }
 
-        private void LaunchButton_Click(object sender, RoutedEventArgs e)
+        private async void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_armaExeLocation) || !File.Exists(_armaExeLocation))
             {
                 MessageBox.Show("Arma 3 executable not found. Please restart the application and select a valid arma3.exe file.", 
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
+            }
+
+            var enabledRepositories = _repositoryManager.GetEnabledRepositories();
+            if (enabledRepositories.Any())
+            {
+                if (_modManager.Modlist.Any())
+                {
+                    var modListSelectionWindow = new ModListSelectionWindow(_modManager.Modlist)
+                    {
+                        Owner = this
+                    };
+
+                    if (modListSelectionWindow.ShowDialog() == true && !string.IsNullOrEmpty(modListSelectionWindow.SelectedPath))
+                    {
+                        var downloadWindow = new DownloadProgressWindow(enabledRepositories, modListSelectionWindow.SelectedPath)
+                        {
+                            Owner = this
+                        };
+
+                        downloadWindow.ShowDialog();
+
+                        if (!downloadWindow.DownloadSuccessful)
+                        {
+                            var result = MessageBox.Show("Some repository downloads failed. Do you want to continue launching Arma 3?", 
+                                "Download Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                            
+                            if (result == MessageBoxResult.No)
+                            {
+                                return;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Please add at least one mod folder to download repository files.", 
+                        "No Mod Folders", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
             }
 
             try
@@ -268,6 +319,69 @@ namespace Arma_3_LTRM
         private void StartupModCheckBox_Changed(object sender, RoutedEventArgs e)
         {
             UpdateModParameters();
+        }
+
+        private void AddRepositoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new AddRepositoryWindow
+            {
+                Owner = this
+            };
+
+            if (dialog.ShowDialog() == true && dialog.Repository != null)
+            {
+                _repositoryManager.AddRepository(dialog.Repository);
+            }
+        }
+
+        private void EditRepositoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (RepositoriesListView.SelectedItem is Repository selectedRepository)
+            {
+                var dialog = new AddRepositoryWindow(selectedRepository)
+                {
+                    Owner = this
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    _repositoryManager.UpdateRepository(selectedRepository);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select a repository to edit.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void RemoveRepositoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (RepositoriesListView.SelectedItem is Repository selectedRepository)
+            {
+                var result = MessageBox.Show($"Are you sure you want to remove the repository '{selectedRepository.Name}'?", 
+                    "Confirm Removal", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                
+                if (result == MessageBoxResult.Yes)
+                {
+                    _repositoryManager.RemoveRepository(selectedRepository);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select a repository to remove.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void RefreshRepositoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (RepositoriesListView.SelectedItem is Repository selectedRepository)
+            {
+                MessageBox.Show($"Refreshing repository '{selectedRepository.Name}'...", "Refresh", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("Please select a repository to refresh.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
     }
 }
