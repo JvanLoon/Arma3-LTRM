@@ -1,385 +1,452 @@
-ï»¿using System.IO;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
 using System.Diagnostics;
+using System.IO;
+using System.Windows;
 using Arma_3_LTRM.Models;
 using Arma_3_LTRM.Services;
-using MouseEventArgs = System.Windows.Input.MouseEventArgs;
-using DragDropEffects = System.Windows.DragDropEffects;
-using DragEventArgs = System.Windows.DragEventArgs;
-using DataFormats = System.Windows.DataFormats;
-using TreeView = System.Windows.Controls.TreeView;
-using TreeViewItem = System.Windows.Controls.TreeViewItem;
+using EventManager = Arma_3_LTRM.Services.EventManager;
+using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
-using Point = System.Windows.Point;
+using Button = System.Windows.Controls.Button;
 
 namespace Arma_3_LTRM.Views
 {
     public partial class MainWindow : Window
     {
-        private const string ARMA3_EXE_NAME = "arma3.exe";
-        private const string ARMA3_LTSYNC_FOLDER_NAME = "ARMA3_LTSYNC";
-
-        private readonly ModManager _modManager;
-        private readonly LaunchParametersManager _launchParametersManager;
         private readonly RepositoryManager _repositoryManager;
-        private string _armaExeLocation = string.Empty;
-        private Point _dragStartPoint;
-        private bool _isDragging;
+        private readonly EventManager _eventManager;
+        private readonly SettingsManager _settingsManager;
+        private readonly FtpManager _ftpManager;
 
         public MainWindow()
         {
             InitializeComponent();
-            _modManager = new ModManager();
-            _launchParametersManager = new LaunchParametersManager();
+
             _repositoryManager = new RepositoryManager();
-            _launchParametersManager.ParametersChanged += OnParametersChanged;
-            SelectArmaExecutable();
-            UpdateRunParametersDisplay();
-            InitializeRepositoriesListView();
+            _eventManager = new EventManager();
+            _settingsManager = new SettingsManager();
+            _ftpManager = new FtpManager();
+
+            LoadData();
         }
 
-        private void InitializeRepositoriesListView()
+        private void LoadData()
         {
-            RepositoriesListView.ItemsSource = _repositoryManager.Repositories;
+            RepositoriesListBox.ItemsSource = _repositoryManager.Repositories;
+            EventsListBox.ItemsSource = _eventManager.Events;
+            ManageRepositoriesListBox.ItemsSource = _repositoryManager.Repositories;
+            ManageEventsListBox.ItemsSource = _eventManager.Events;
         }
 
-        private void CheckBox_Checked(object sender, RoutedEventArgs e)
+        private void MenuSettings_Click(object sender, RoutedEventArgs e)
         {
-
+            var settingsWindow = new SettingsWindow(_settingsManager);
+            settingsWindow.Owner = this;
+            settingsWindow.ShowDialog();
         }
 
-        private void LaunchOption_Changed(object sender, RoutedEventArgs e)
+        private void MenuExit_Click(object sender, RoutedEventArgs e)
         {
-            _launchParametersManager.SetParameter("windowed", WindowedCheckBox.IsChecked == true);
-            _launchParametersManager.SetParameter("world", EmptyWorldCheckBox.IsChecked == true);
-            _launchParametersManager.SetParameter("skipIntro", SkipIntroCheckBox.IsChecked == true);
-            _launchParametersManager.SetParameter("nosplash", NoSplashCheckBox.IsChecked == true);
-            _launchParametersManager.SetParameter("noPause", NoPauseCheckBox.IsChecked == true);
-            _launchParametersManager.SetParameter("noPauseAudio", NoPauseAudioCheckBox.IsChecked == true);
-            _launchParametersManager.SetParameter("noLogs", NoLogsCheckBox.IsChecked == true);
-            _launchParametersManager.SetParameter("showScriptErrors", ShowScriptErrorsCheckBox.IsChecked == true);
-            _launchParametersManager.SetParameter("filePatching", FilePatchingCheckBox.IsChecked == true);
-            UpdateModParameters();
+            Application.Current.Shutdown();
         }
 
-        private void AdditionalParametersTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        private void MenuAbout_Click(object sender, RoutedEventArgs e)
         {
-            UpdateRunParametersDisplay();
+            MessageBox.Show("Arma 3 LTRM - Lowlands Tactical Repo Manager\n\n" +
+                          "A modern FTP-based mod repository manager for Arma 3.\n\n" +
+                          "Version 2.0\n" +
+                          "© 2024 Lowlands Tactical",
+                          "About", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void OnParametersChanged(object? sender, EventArgs e)
+        private async void DownloadLaunchRepository_Click(object sender, RoutedEventArgs e)
         {
-            UpdateRunParametersDisplay();
-        }
-
-        private void UpdateRunParametersDisplay()
-        {
-            var parameters = _launchParametersManager.GetParametersList();
-            
-            if (!string.IsNullOrWhiteSpace(AdditionalParametersTextBox?.Text))
+            var selectedRepos = RepositoriesListBox.SelectedItems.Cast<Repository>().ToList();
+            if (selectedRepos.Count == 0)
             {
-                var additionalParams = AdditionalParametersTextBox.Text
-                    .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(p => p.Trim())
-                    .Where(p => !string.IsNullOrWhiteSpace(p));
-                parameters.AddRange(additionalParams);
-            }
-
-            RunParametersTextBlock.Text = string.Join(Environment.NewLine, parameters);
-        }
-
-        private void UpdateModParameters()
-        {
-            var checkedMods = _modManager.GetCheckedStartupMods(StarupModsListTreeView);
-            _launchParametersManager.UpdateModsList(checkedMods);
-        }
-
-        private async void LaunchButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(_armaExeLocation) || !File.Exists(_armaExeLocation))
-            {
-                MessageBox.Show("Arma 3 executable not found. Please restart the application and select a valid arma3.exe file.", 
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Please select at least one repository.", "No Selection", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            var enabledRepositories = _repositoryManager.GetEnabledRepositories();
-            if (enabledRepositories.Any())
+            if (!ValidateArma3Path())
+                return;
+
+            var downloadPaths = new List<string>();
+            foreach (var repo in selectedRepos)
             {
-                if (_modManager.ModList.Any())
+                var repoPath = Path.Combine(_settingsManager.Settings.BaseDownloadLocation, "Repositories", repo.Name);
+                downloadPaths.Add(repoPath);
+
+                var progressWindow = new SimpleProgressWindow();
+                progressWindow.Owner = this;
+
+                var progress = new Progress<string>(message => progressWindow.AppendLog(message));
+
+                progressWindow.Show();
+                var success = await _ftpManager.DownloadRepositoryAsync(repo, repoPath, progress);
+                progressWindow.Close();
+
+                if (!success)
                 {
-                    var modListSelectionWindow = new ModListSelectionWindow(_modManager.ModList)
-                    {
-                        Owner = this
-                    };
-
-                    if (modListSelectionWindow.ShowDialog() == true && !string.IsNullOrEmpty(modListSelectionWindow.SelectedPath))
-                    {
-                        var downloadWindow = new DownloadProgressWindow(enabledRepositories, modListSelectionWindow.SelectedPath)
-                        {
-                            Owner = this
-                        };
-
-                        downloadWindow.ShowDialog();
-
-                        if (!downloadWindow.DownloadSuccessful)
-                        {
-                            var result = MessageBox.Show("Some repository downloads failed. Do you want to continue launching Arma 3?", 
-                                "Download Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                            
-                            if (result == MessageBoxResult.No)
-                            {
-                                return;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Please add at least one mod folder to download repository files.", 
-                        "No Mod Folders", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show($"Failed to download repository '{repo.Name}'.", "Download Failed", 
+                        MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
             }
 
-            try
-            {
-                var parameterString = _launchParametersManager.GetParametersString();
-                
-                if (!string.IsNullOrWhiteSpace(AdditionalParametersTextBox?.Text))
-                {
-                    var additionalParams = AdditionalParametersTextBox.Text
-                        .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(p => p.Trim())
-                        .Where(p => !string.IsNullOrWhiteSpace(p));
-                    parameterString += " " + string.Join(" ", additionalParams);
-                }
-
-                if (AdditionalParametersTextBox!= null && !string.IsNullOrWhiteSpace(AdditionalParametersTextBox.Text))
-                {
-                    var additionalParams = AdditionalParametersTextBox.Text
-                        .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(p => p.Trim())
-                        .Where(p => !string.IsNullOrWhiteSpace(p));
-                    parameterString += " " + string.Join(" ", additionalParams);
-                }
-
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = _armaExeLocation,
-                    Arguments = parameterString,
-                    UseShellExecute = false,
-                    WorkingDirectory = Path.GetDirectoryName(_armaExeLocation)
-                };
-
-                Process.Start(startInfo);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to launch Arma 3: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            LaunchArma3(downloadPaths);
         }
 
-        private void SelectArmaExecutable()
+        private async void DownloadRepository_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog
+            var selectedRepos = RepositoriesListBox.SelectedItems.Cast<Repository>().ToList();
+            if (selectedRepos.Count == 0)
             {
-                Title = "Select Arma 3 Executable",
-                Filter = "Arma 3 Executable|arma3.exe|All Executables|*.exe",
-                FileName = ARMA3_EXE_NAME
-            };
+                MessageBox.Show("Please select at least one repository.", "No Selection", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
-            if (dialog.ShowDialog() == true)
+            foreach (var repo in selectedRepos)
             {
-                if (Path.GetFileName(dialog.FileName).Equals(ARMA3_EXE_NAME, StringComparison.OrdinalIgnoreCase))
+                var repoPath = Path.Combine(_settingsManager.Settings.BaseDownloadLocation, "Repositories", repo.Name);
+
+                var progressWindow = new SimpleProgressWindow();
+                progressWindow.Owner = this;
+
+                var progress = new Progress<string>(message => progressWindow.AppendLog(message));
+
+                progressWindow.Show();
+                await _ftpManager.DownloadRepositoryAsync(repo, repoPath, progress);
+                progressWindow.Close();
+            }
+
+            MessageBox.Show("Repository download completed!", "Download Complete", 
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void LaunchRepository_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedRepos = RepositoriesListBox.SelectedItems.Cast<Repository>().ToList();
+            if (selectedRepos.Count == 0)
+            {
+                MessageBox.Show("Please select at least one repository.", "No Selection", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!ValidateArma3Path())
+                return;
+
+            var downloadPaths = new List<string>();
+            foreach (var repo in selectedRepos)
+            {
+                var repoPath = Path.Combine(_settingsManager.Settings.BaseDownloadLocation, "Repositories", repo.Name);
+                if (!Directory.Exists(repoPath))
                 {
-                    _armaExeLocation = dialog.FileName;
-                    _modManager.Arma3ExeLocation = Path.GetDirectoryName(dialog.FileName) ?? dialog.FileName;
+                    MessageBox.Show($"Repository '{repo.Name}' has not been downloaded yet.\n\nPath: {repoPath}", 
+                        "Repository Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                downloadPaths.Add(repoPath);
+            }
+
+            LaunchArma3(downloadPaths);
+        }
+
+        private async void DownloadLaunchEvent_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedEvents = EventsListBox.SelectedItems.Cast<Event>().ToList();
+            if (selectedEvents.Count == 0)
+            {
+                MessageBox.Show("Please select at least one event.", "No Selection", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!ValidateArma3Path())
+                return;
+
+            var eventPaths = new List<string>();
+            foreach (var evt in selectedEvents)
+            {
+                var progressWindow = new SimpleProgressWindow();
+                progressWindow.Owner = this;
+                var progress = new Progress<string>(message => progressWindow.AppendLog(message));
+                progressWindow.Show();
+
+                foreach (var modFolder in evt.ModFolders)
+                {
+                    // Maintain full folder structure from FTP path
+                    // e.g., /mods/xyz/@ACE becomes eventBasePath/mods/xyz/@ACE
+                    var relativePath = modFolder.FolderPath.TrimStart('/');
+                    var localPath = Path.Combine(_settingsManager.Settings.BaseDownloadLocation, relativePath);
                     
-                    if (_modManager.Arma3ExeLocation != null)
-                    {
-                        _modManager.AddMod(_modManager.Arma3ExeLocation);
-                        _modManager.RefreshModListTreeView(ModListTreeView);
-                    }
+                    await _ftpManager.DownloadFolderAsync(
+                        modFolder.FtpUrl,
+                        modFolder.Port,
+                        modFolder.Username,
+                        modFolder.Password,
+                        modFolder.FolderPath,
+                        localPath,
+                        progress
+                    );
                 }
-                else
+
+                progressWindow.Close();
+                eventPaths.Add(_settingsManager.Settings.BaseDownloadLocation);
+            }
+
+            LaunchArma3(eventPaths);
+        }
+
+        private async void DownloadEvent_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedEvents = EventsListBox.SelectedItems.Cast<Event>().ToList();
+            if (selectedEvents.Count == 0)
+            {
+                MessageBox.Show("Please select at least one event.", "No Selection", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            foreach (var evt in selectedEvents)
+            {
+                var progressWindow = new SimpleProgressWindow();
+                progressWindow.Owner = this;
+                var progress = new Progress<string>(message => progressWindow.AppendLog(message));
+                progressWindow.Show();
+
+                foreach (var modFolder in evt.ModFolders)
                 {
-                    MessageBox.Show("Please select the arma3.exe file.", "Invalid File", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-        }
-
-        private void Add_Folder_To_Modlist_Click(object sender, RoutedEventArgs e)
-        {
-            var dialog = new Microsoft.Win32.OpenFolderDialog
-            {
-                Title = "Select Mod Folder",
-                Multiselect = false
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                _modManager.AddMod(dialog.FolderName);
-                _modManager.RefreshModListTreeView(ModListTreeView);
-                _modManager.PopulateAvailableAddonsTreeView(AvailableAddonsTreeView);
-            }
-        }
-
-        private void Remove_Folder_To_Modlist_Click(object sender, RoutedEventArgs e)
-        {
-
-            if (ModListTreeView.SelectedItem is TreeViewItem selectedItem)
-            {
-                string modPath = selectedItem.Tag as string;
-                if (!string.IsNullOrEmpty(modPath))
-                {
-                    _modManager.RemoveMod(modPath);
-                    _modManager.RefreshModListTreeView(ModListTreeView);
-                    _modManager.PopulateAvailableAddonsTreeView(AvailableAddonsTreeView);
-                }
-            }
-            else
-            {
-                MessageBox.Show("Please select a mod folder to remove.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        private void AvailableAddonsTreeView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            _dragStartPoint = e.GetPosition(null);
-            _isDragging = false;
-        }
-
-        private void AvailableAddonsTreeView_PreviewMouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed && !_isDragging)
-            {
-                Point currentPosition = e.GetPosition(null);
-                Vector diff = _dragStartPoint - currentPosition;
-
-                if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
-                    Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
-                {
-                    _isDragging = true;
+                    // Maintain full folder structure from FTP path
+                    // e.g., /mods/xyz/@ACE becomes eventBasePath/mods/xyz/@ACE
+                    var relativePath = modFolder.FolderPath.TrimStart('/');
+                    var localPath = Path.Combine(_settingsManager.Settings.BaseDownloadLocation, relativePath);
                     
-                    if (sender is TreeView treeView && treeView.SelectedItem is TreeViewItem selectedItem)
-                    {
-                        string modPath = _modManager.FindModStartDirectory(selectedItem);
-                        if (modPath != null)
-                        {
-                            DragDrop.DoDragDrop(treeView, modPath, DragDropEffects.Copy);
-                            _isDragging = false;
-                        }
-                    }
+                    await _ftpManager.DownloadFolderAsync(
+                        modFolder.FtpUrl,
+                        modFolder.Port,
+                        modFolder.Username,
+                        modFolder.Password,
+                        modFolder.FolderPath,
+                        localPath,
+                        progress
+                    );
+                }
+
+                progressWindow.Close();
+            }
+
+            MessageBox.Show("Event download completed!", "Download Complete", 
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void LaunchEvent_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedEvents = EventsListBox.SelectedItems.Cast<Event>().ToList();
+            if (selectedEvents.Count == 0)
+            {
+                MessageBox.Show("Please select at least one event.", "No Selection", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!ValidateArma3Path())
+                return;
+
+            var eventPaths = new List<string>();
+            foreach (var evt in selectedEvents)
+            {
+                if (!Directory.Exists(_settingsManager.Settings.BaseDownloadLocation))
+                {
+                    MessageBox.Show($"Event '{evt.Name}' has not been downloaded yet.\n\nPath: {_settingsManager.Settings.BaseDownloadLocation}", 
+                        "Event Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                eventPaths.Add(_settingsManager.Settings.BaseDownloadLocation);
+            }
+
+            LaunchArma3(eventPaths);
+        }
+
+        private void AddRepository_Click(object sender, RoutedEventArgs e)
+        {
+            var addRepoWindow = new AddRepositoryWindow();
+            addRepoWindow.Owner = this;
+            if (addRepoWindow.ShowDialog() == true && addRepoWindow.Repository != null)
+            {
+                _repositoryManager.AddRepository(addRepoWindow.Repository);
+            }
+        }
+
+        private void EditRepository_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Repository repo)
+            {
+                var editRepoWindow = new AddRepositoryWindow(repo);
+                editRepoWindow.Owner = this;
+                if (editRepoWindow.ShowDialog() == true)
+                {
+                    _repositoryManager.UpdateRepository(repo);
                 }
             }
         }
 
-        private void StarupModsListTreeView_DragOver(object sender, DragEventArgs e)
+        private void DeleteRepository_Click(object sender, RoutedEventArgs e)
         {
-            e.Effects = e.Data.GetDataPresent(DataFormats.StringFormat) 
-                ? DragDropEffects.Copy 
-                : DragDropEffects.None;
-            e.Handled = true;
-        }
-
-        private void StarupModsListTreeView_Drop(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(DataFormats.StringFormat))
+            if (sender is Button button && button.Tag is Repository repo)
             {
-                string modPath = (string)e.Data.GetData(DataFormats.StringFormat);
-                _modManager.AddStartupMod(modPath);
-                _modManager.RefreshStartupModsTreeView(StarupModsListTreeView);
-                WireUpStartupModCheckboxes();
-                UpdateModParameters();
-            }
-        }
-
-        private void WireUpStartupModCheckboxes()
-        {
-            foreach (TreeViewItem item in StarupModsListTreeView.Items)
-            {
-                if (item.Header is System.Windows.Controls.CheckBox checkBox)
-                {
-                    checkBox.Checked -= StartupModCheckBox_Changed;
-                    checkBox.Unchecked -= StartupModCheckBox_Changed;
-                    checkBox.Checked += StartupModCheckBox_Changed;
-                    checkBox.Unchecked += StartupModCheckBox_Changed;
-                }
-            }
-        }
-
-        private void StartupModCheckBox_Changed(object sender, RoutedEventArgs e)
-        {
-            UpdateModParameters();
-        }
-
-        private void AddRepositoryButton_Click(object sender, RoutedEventArgs e)
-        {
-            var dialog = new AddRepositoryWindow
-            {
-                Owner = this
-            };
-
-            if (dialog.ShowDialog() == true && dialog.Repository != null)
-            {
-                _repositoryManager.AddRepository(dialog.Repository);
-            }
-        }
-
-        private void EditRepositoryButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (RepositoriesListView.SelectedItem is Repository selectedRepository)
-            {
-                var dialog = new AddRepositoryWindow(selectedRepository)
-                {
-                    Owner = this
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    _repositoryManager.UpdateRepository(selectedRepository);
-                }
-            }
-            else
-            {
-                MessageBox.Show("Please select a repository to edit.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        private void RemoveRepositoryButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (RepositoriesListView.SelectedItem is Repository selectedRepository)
-            {
-                var result = MessageBox.Show($"Are you sure you want to remove the repository '{selectedRepository.Name}'?", 
-                    "Confirm Removal", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                var result = MessageBox.Show($"Are you sure you want to delete repository '{repo.Name}'?", 
+                    "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 
                 if (result == MessageBoxResult.Yes)
                 {
-                    _repositoryManager.RemoveRepository(selectedRepository);
+                    _repositoryManager.RemoveRepository(repo);
                 }
-            }
-            else
-            {
-                MessageBox.Show("Please select a repository to remove.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
-        private void RefreshRepositoryButton_Click(object sender, RoutedEventArgs e)
+        private async void TestRepositoryConnection_Click(object sender, RoutedEventArgs e)
         {
-            if (RepositoriesListView.SelectedItem is Repository selectedRepository)
+            var selectedRepo = ManageRepositoriesListBox.SelectedItem as Repository;
+            if (selectedRepo == null)
             {
-                MessageBox.Show($"Refreshing repository '{selectedRepository.Name}'...", "Refresh", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Please select a repository to test.", "No Selection", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var button = sender as Button;
+            if (button != null)
+            {
+                button.IsEnabled = false;
+                button.Content = "Testing...";
+            }
+
+            bool success = await Task.Run(() => _ftpManager.TestConnection(selectedRepo));
+
+            if (button != null)
+            {
+                button.IsEnabled = true;
+                button.Content = "Test Connection";
+            }
+
+            if (success)
+            {
+                MessageBox.Show($"Successfully connected to '{selectedRepo.Name}'!", 
+                    "Connection Successful", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
-                MessageBox.Show("Please select a repository to refresh.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Failed to connect to '{selectedRepo.Name}'.\n\nPlease check the connection settings.", 
+                    "Connection Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void AddEvent_Click(object sender, RoutedEventArgs e)
+        {
+            if (_repositoryManager.Repositories.Count == 0)
+            {
+                MessageBox.Show("Please add at least one repository before creating an event.", 
+                    "No Repositories", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var addEventWindow = new AddEditEventWindow(_repositoryManager);
+            addEventWindow.Owner = this;
+            if (addEventWindow.ShowDialog() == true && addEventWindow.Event != null)
+            {
+                _eventManager.AddEvent(addEventWindow.Event);
+            }
+        }
+
+        private void EditEvent_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Event evt)
+            {
+                var editEventWindow = new AddEditEventWindow(_repositoryManager, evt);
+                editEventWindow.Owner = this;
+                if (editEventWindow.ShowDialog() == true)
+                {
+                    _eventManager.UpdateEvent(evt);
+                }
+            }
+        }
+
+        private void DeleteEvent_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Event evt)
+            {
+                var result = MessageBox.Show($"Are you sure you want to delete event '{evt.Name}'?", 
+                    "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                
+                if (result == MessageBoxResult.Yes)
+                {
+                    _eventManager.RemoveEvent(evt);
+                }
+            }
+        }
+
+        private bool ValidateArma3Path()
+        {
+            if (string.IsNullOrWhiteSpace(_settingsManager.Settings.Arma3ExePath) || 
+                !File.Exists(_settingsManager.Settings.Arma3ExePath))
+            {
+                MessageBox.Show("Arma 3 executable path is not set or invalid.\n\nPlease configure it in Settings (File ? Settings).", 
+                    "Arma 3 Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+            return true;
+        }
+
+        private void LaunchArma3(List<string> modPaths)
+        {
+            try
+            {
+                var modFolders = new List<string>();
+                
+                foreach (var basePath in modPaths)
+                {
+                    if (Directory.Exists(basePath))
+                    {
+                        var directories = Directory.GetDirectories(basePath, "*", SearchOption.AllDirectories);
+                        foreach (var dir in directories)
+                        {
+                            if (Path.GetFileName(dir).StartsWith("@"))
+                            {
+                                modFolders.Add(dir);
+                            }
+                        }
+                    }
+                }
+
+                if (modFolders.Count == 0)
+                {
+                    MessageBox.Show("No mod folders found (folders starting with '@').", 
+                        "No Mods Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var modParams = string.Join(";", modFolders);
+                var arguments = $"-mod={modParams}";
+
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = _settingsManager.Settings.Arma3ExePath,
+                    Arguments = arguments,
+                    UseShellExecute = false
+                };
+
+                Process.Start(processInfo);
+
+                MessageBox.Show($"Arma 3 launched with {modFolders.Count} mod(s)!", 
+                    "Launch Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to launch Arma 3: {ex.Message}", 
+                    "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

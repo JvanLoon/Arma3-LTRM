@@ -3,68 +3,16 @@
   "WorkspaceRootPath": "E:\\Development\\Repos\\Arma3-LTRM\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\views\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:views\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\views\\modlistselectionwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:views\\modlistselectionwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\views\\downloadprogresswindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:views\\downloadprogresswindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\views\\addrepositorywindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:views\\addrepositorywindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\assemblyinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:assemblyinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\services\\ftpmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:services\\ftpmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\models\\repository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:models\\repository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\services\\repositorymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:services\\repositorymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\services\\launchparametersmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:services\\launchparametersmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\services\\modmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:services\\modmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\views\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:views\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\views\\addrepositorywindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:views\\addrepositorywindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\views\\downloadprogresswindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:views\\downloadprogresswindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\views\\modlistselectionwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:views\\modlistselectionwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\readme.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:readme.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\cleanup_summary.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:cleanup_summary.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\regeneration_complete.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:regeneration_complete.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
     }
   ],
   "DocumentGroupContainers": [
@@ -74,209 +22,45 @@
       "DocumentGroups": [
         {
           "DockedHeight": 254,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "Repository.cs",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Models\\Repository.cs",
-              "RelativeDocumentMoniker": "Models\\Repository.cs",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Models\\Repository.cs",
-              "RelativeToolTip": "Models\\Repository.cs",
-              "ViewState": "AgIAAD8AAAAAAAAAAAAAAG0AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-17T15:30:04.027Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "CLEANUP_SUMMARY.md",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\CLEANUP_SUMMARY.md",
-              "RelativeDocumentMoniker": "CLEANUP_SUMMARY.md",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\CLEANUP_SUMMARY.md",
-              "RelativeToolTip": "CLEANUP_SUMMARY.md",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAJ4AAAAAAAAAAAAAAA==",
+              "DocumentIndex": 2,
+              "Title": "REGENERATION_COMPLETE.md",
+              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\REGENERATION_COMPLETE.md",
+              "RelativeDocumentMoniker": "REGENERATION_COMPLETE.md",
+              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\REGENERATION_COMPLETE.md",
+              "RelativeToolTip": "REGENERATION_COMPLETE.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAKoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
-              "WhenOpened": "2026-01-17T15:33:20.716Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "FtpManager.cs",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Services\\FtpManager.cs",
-              "RelativeDocumentMoniker": "Services\\FtpManager.cs",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Services\\FtpManager.cs",
-              "RelativeToolTip": "Services\\FtpManager.cs",
-              "ViewState": "AgIAAEIAAAAAAAAAAAAAAHYAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-17T15:30:04.079Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "MainWindow.xaml",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\MainWindow.xaml",
-              "RelativeDocumentMoniker": "Views\\MainWindow.xaml",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\MainWindow.xaml",
-              "RelativeToolTip": "Views\\MainWindow.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-01-17T15:31:27.414Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "README.md",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\README.md",
-              "RelativeDocumentMoniker": "README.md",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\README.md",
-              "RelativeToolTip": "README.md",
-              "ViewState": "AgIAALwAAAAAAAAAAABBwL0AAABoAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
-              "WhenOpened": "2026-01-17T15:32:35.811Z",
+              "WhenOpened": "2026-01-17T16:51:00.639Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "App.xaml",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\App.xaml",
-              "RelativeDocumentMoniker": "App.xaml",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\App.xaml",
-              "RelativeToolTip": "App.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-01-17T15:31:48.527Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "ModListSelectionWindow.xaml",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\ModListSelectionWindow.xaml",
-              "RelativeDocumentMoniker": "Views\\ModListSelectionWindow.xaml",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\ModListSelectionWindow.xaml",
-              "RelativeToolTip": "Views\\ModListSelectionWindow.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-01-17T15:31:39.948Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "DownloadProgressWindow.xaml",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\DownloadProgressWindow.xaml",
-              "RelativeDocumentMoniker": "Views\\DownloadProgressWindow.xaml",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\DownloadProgressWindow.xaml",
-              "RelativeToolTip": "Views\\DownloadProgressWindow.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-01-17T15:31:39.597Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "AddRepositoryWindow.xaml",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\AddRepositoryWindow.xaml",
-              "RelativeDocumentMoniker": "Views\\AddRepositoryWindow.xaml",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\AddRepositoryWindow.xaml",
-              "RelativeToolTip": "Views\\AddRepositoryWindow.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-01-17T15:31:27.795Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "RepositoryManager.cs",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Services\\RepositoryManager.cs",
-              "RelativeDocumentMoniker": "Services\\RepositoryManager.cs",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Services\\RepositoryManager.cs",
-              "RelativeToolTip": "Services\\RepositoryManager.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFEAAAAAAAAAAAAAAA==",
+              "Title": "FtpManager.cs",
+              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Services\\FtpManager.cs",
+              "RelativeDocumentMoniker": "Services\\FtpManager.cs",
+              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Services\\FtpManager.cs",
+              "RelativeToolTip": "Services\\FtpManager.cs",
+              "ViewState": "AgIAAKgBAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-17T15:30:34.333Z",
+              "WhenOpened": "2026-01-17T16:50:20.837Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "MainWindow.xaml.cs",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\MainWindow.xaml.cs",
-              "RelativeDocumentMoniker": "Views\\MainWindow.xaml.cs",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\MainWindow.xaml.cs",
-              "RelativeToolTip": "Views\\MainWindow.xaml.cs",
-              "ViewState": "AgIAAG0AAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "AssemblyInfo.cs",
+              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\AssemblyInfo.cs",
+              "RelativeDocumentMoniker": "AssemblyInfo.cs",
+              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\AssemblyInfo.cs",
+              "RelativeToolTip": "AssemblyInfo.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-17T15:31:18.828Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "ModManager.cs",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Services\\ModManager.cs",
-              "RelativeDocumentMoniker": "Services\\ModManager.cs",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Services\\ModManager.cs",
-              "RelativeToolTip": "Services\\ModManager.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAK8AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-17T15:30:34.429Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "LaunchParametersManager.cs",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Services\\LaunchParametersManager.cs",
-              "RelativeDocumentMoniker": "Services\\LaunchParametersManager.cs",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Services\\LaunchParametersManager.cs",
-              "RelativeToolTip": "Services\\LaunchParametersManager.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEUAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-17T15:30:34.383Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "ModListSelectionWindow.xaml.cs",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\ModListSelectionWindow.xaml.cs",
-              "RelativeDocumentMoniker": "Views\\ModListSelectionWindow.xaml.cs",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\ModListSelectionWindow.xaml.cs",
-              "RelativeToolTip": "Views\\ModListSelectionWindow.xaml.cs",
-              "ViewState": "AgIAAAIAAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-17T15:31:19.215Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "DownloadProgressWindow.xaml.cs",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\DownloadProgressWindow.xaml.cs",
-              "RelativeDocumentMoniker": "Views\\DownloadProgressWindow.xaml.cs",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\DownloadProgressWindow.xaml.cs",
-              "RelativeToolTip": "Views\\DownloadProgressWindow.xaml.cs",
-              "ViewState": "AgIAAAIAAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-17T15:31:19.131Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "AddRepositoryWindow.xaml.cs",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\AddRepositoryWindow.xaml.cs",
-              "RelativeDocumentMoniker": "Views\\AddRepositoryWindow.xaml.cs",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\Views\\AddRepositoryWindow.xaml.cs",
-              "RelativeToolTip": "Views\\AddRepositoryWindow.xaml.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-17T15:31:19.046Z",
+              "WhenOpened": "2026-01-17T16:49:30.809Z",
               "EditorCaption": ""
             }
           ]

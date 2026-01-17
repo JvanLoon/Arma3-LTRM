@@ -1,341 +1,280 @@
-﻿<Window x:Class="Arma_3_LTRM.Views.MainWindow"
-xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-xmlns:local="clr-namespace:Arma_3_LTRM.Views"
-mc:Ignorable="d"
-    Title="Arma 3 LTRM - Lowlands Tactical Repo Manager" 
-        MinHeight="500" 
-        MinWidth="900"
-        Height="600"
-        Width="1000"
+<Window x:Class="Arma_3_LTRM.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Arma 3 LTRM - Lowlands Tactical Repo Manager" 
+        Height="700" Width="1200"
+        MinHeight="600" MinWidth="1000"
         WindowStartupLocation="CenterScreen"
-        FontFamily="Calibri">
+        Background="#1E1E1E">
+    
+    <Window.Resources>
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Name="Border" BorderThickness="0" Background="#2D2D30" Margin="2,0">
+                            <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                            ContentSource="Header" Margin="20,10"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#0E639C"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#3E3E42"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="#1177BB"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style TargetType="Button" x:Key="ActionButton">
+            <Setter Property="Background" Value="#0E639C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1177BB"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#3F3F46"/>
+                    <Setter Property="Foreground" Value="#808080"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="#252526"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="BorderBrush" Value="#3F3F46"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TabControl Grid.Row="0" Margin="5">
-            <TabItem Header="Addons">
-                <Grid Background="#FFE5E5E5">
+        <Menu Grid.Row="0" Background="#2D2D30" Foreground="#E0E0E0">
+            <MenuItem Header="File">
+                <MenuItem Header="Settings" Click="MenuSettings_Click"/>
+                <Separator/>
+                <MenuItem Header="Exit" Click="MenuExit_Click"/>
+            </MenuItem>
+            <MenuItem Header="Help">
+                <MenuItem Header="About" Click="MenuAbout_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <TabControl Grid.Row="1">
+            <TabItem Header="Home">
+                <Grid Background="#1E1E1E" Margin="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="REPOSITORIES" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                        
+                        <ListBox x:Name="RepositoriesListBox" Height="400" Margin="0,0,0,15"
+                                 SelectionMode="Extended">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="??" FontSize="20" Margin="0,0,10,0"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
+                                            <TextBlock Text="{Binding Url}" Foreground="#999" FontSize="12"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <StackPanel>
+                            <Button Style="{StaticResource ActionButton}" Content="Download &amp; Launch Repository" 
+                                    Click="DownloadLaunchRepository_Click" Margin="0,0,0,10"/>
+                            <Button Style="{StaticResource ActionButton}" Content="Download Repository" 
+                                    Click="DownloadRepository_Click" Margin="0,0,0,10"/>
+                            <Button Style="{StaticResource ActionButton}" Content="Launch with Repository" 
+                                    Click="LaunchRepository_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="EVENTS" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                        
+                        <ListBox x:Name="EventsListBox" Height="400" Margin="0,0,0,15"
+                                 SelectionMode="Extended">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="??" FontSize="20" Margin="0,0,10,0"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
+                                            <TextBlock Foreground="#999" FontSize="12">
+                                                <Run Text="{Binding ModFolders.Count, Mode=OneWay}"/>
+                                                <Run Text=" mod folder(s)"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <StackPanel>
+                            <Button Style="{StaticResource ActionButton}" Content="Download &amp; Launch Event" 
+                                    Click="DownloadLaunchEvent_Click" Margin="0,0,0,10"/>
+                            <Button Style="{StaticResource ActionButton}" Content="Download Event" 
+                                    Click="DownloadEvent_Click" Margin="0,0,0,10"/>
+                            <Button Style="{StaticResource ActionButton}" Content="Launch with Event" 
+                                    Click="LaunchEvent_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Manage Repositories">
+                <Grid Background="#1E1E1E" Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="120"/>
                     </Grid.RowDefinitions>
-                    
-                    <!-- Main content area -->
-                    <Grid Grid.Row="0" Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" MinWidth="300"/>
-                            <ColumnDefinition Width="5"/>
-                            <ColumnDefinition Width="*" MinWidth="300"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <!-- Left side: Available Addons -->
-                        <GroupBox Grid.Column="0" Header="Available Addons" Padding="5">
-                            <TabControl>
-                                <TabItem Header="Mods">
-                                    <TreeView x:Name="AvailableAddonsTreeView" 
-                                              PreviewMouseLeftButtonDown="AvailableAddonsTreeView_PreviewMouseLeftButtonDown" 
-                                              PreviewMouseMove="AvailableAddonsTreeView_PreviewMouseMove"/>
-                                </TabItem>
-                                <TabItem Header="DLC">
-                                    <Grid Background="#FFE5E5E5">
-                                        <TextBlock Text="DLC management coming soon..." 
-                                                   HorizontalAlignment="Center" 
-                                                   VerticalAlignment="Center" 
-                                                   Foreground="Gray"/>
-                                    </Grid>
-                                </TabItem>
-                            </TabControl>
-                        </GroupBox>
-                        
-                        <GridSplitter Grid.Column="1" 
-                                      Width="5" 
-                                      HorizontalAlignment="Stretch" 
-                                      Background="#FFD0D0D0"/>
-                        
-                        <!-- Right side: Startup Mods -->
-                        <GroupBox Grid.Column="2" Header="Startup Mods (Drag addons here)" Padding="5">
-                            <TreeView x:Name="StarupModsListTreeView" 
-                                      AllowDrop="True" 
-                                      Drop="StarupModsListTreeView_Drop" 
-                                      DragOver="StarupModsListTreeView_DragOver"/>
-                        </GroupBox>
-                    </Grid>
-                    
-                    <GridSplitter Grid.Row="1" 
-                                  Height="5" 
-                                  HorizontalAlignment="Stretch" 
-                                  Background="#FFD0D0D0"/>
-                    
-                    <!-- Bottom: Mod Folders -->
-                    <GroupBox Grid.Row="2" Header="Mod Folders" Margin="5" Padding="5">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <TreeView x:Name="ModListTreeView" Grid.Column="0"/>
-                            
-                            <StackPanel Grid.Column="1" Margin="5,0,0,0" Width="30">
-                                <Button Content="+" 
-                                        Height="25" 
-                                        Margin="0,0,0,5" 
-                                        Click="Add_Folder_To_Modlist_Click"
-                                        ToolTip="Add mod folder"/>
-                                <Button Content="-" 
-                                        Height="25" 
-                                        Margin="0,0,0,5" 
-                                        Click="Remove_Folder_To_Modlist_Click"
-                                        ToolTip="Remove selected folder"/>
-                            </StackPanel>
-                        </Grid>
-                    </GroupBox>
+
+                    <ListBox x:Name="ManageRepositoriesListBox" Grid.Row="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
+                                        <TextBlock Foreground="#999">
+                                            <Run Text="{Binding Url}"/>
+                                            <Run Text=":"/>
+                                            <Run Text="{Binding Port}"/>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding Username}" Foreground="#999" FontSize="12"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Edit" Style="{StaticResource ActionButton}"
+                                            Margin="10,0" Padding="15,5" Click="EditRepository_Click" Tag="{Binding}"/>
+                                    <Button Grid.Column="2" Content="Delete" Padding="15,5"
+                                            Click="DeleteRepository_Click" Tag="{Binding}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource ActionButton}">
+                                                <Setter Property="Background" Value="#B73A3A"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#D84848"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                        <Button Style="{StaticResource ActionButton}" Content="Add Repository" Click="AddRepository_Click" Width="150"/>
+                        <Button Style="{StaticResource ActionButton}" Content="Test Connection" Click="TestRepositoryConnection_Click" 
+                                Width="150" Margin="10,0,0,0"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
-            
-            <TabItem Header="Launcher Options">
-                <Grid Background="#FFE5E5E5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="300" MinWidth="250"/>
-                        <ColumnDefinition Width="5"/>
-                        <ColumnDefinition Width="*" MinWidth="300"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <!-- Left side: Launch Options -->
-                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="10">
-                            <GroupBox Header="Profile Settings" Padding="10" Margin="0,0,0,10">
-                                <StackPanel>
-                                    <CheckBox x:Name="ProfileCheckBox" Content="Use Profile" Margin="0,0,0,5"/>
-                                    <ComboBox x:Name="ProfileComboBox" IsEnabled="{Binding IsChecked, ElementName=ProfileCheckBox}"/>
-                                </StackPanel>
-                            </GroupBox>
-                            
-                            <GroupBox Header="Arma Units" Padding="10" Margin="0,0,0,10">
-                                <StackPanel>
-                                    <CheckBox x:Name="UnitIDCheckBox" Content="Unit ID" Margin="0,0,0,5"/>
-                                    <TextBox x:Name="UnitIDTextBox" 
-                                             Text="ArmaUnits ID" 
-                                             IsEnabled="{Binding IsChecked, ElementName=UnitIDCheckBox}"/>
-                                </StackPanel>
-                            </GroupBox>
-                            
-                            <GroupBox Header="Display Options" Padding="10" Margin="0,0,0,10">
-                                <StackPanel>
-                                    <CheckBox x:Name="WindowedCheckBox" 
-                                              Content="Windowed" 
-                                              Margin="0,3"
-                                              Checked="LaunchOption_Changed" 
-                                              Unchecked="LaunchOption_Changed"/>
-                                    <CheckBox x:Name="SkipIntroCheckBox" 
-                                              Content="Skip Intro" 
-                                              Margin="0,3"
-                                              Checked="LaunchOption_Changed" 
-                                              Unchecked="LaunchOption_Changed"/>
-                                    <CheckBox x:Name="NoSplashCheckBox" 
-                                              Content="No Splash Screen" 
-                                              Margin="0,3"
-                                              Checked="LaunchOption_Changed" 
-                                              Unchecked="LaunchOption_Changed"/>
-                                </StackPanel>
-                            </GroupBox>
-                            
-                            <GroupBox Header="Game Behavior" Padding="10" Margin="0,0,0,10">
-                                <StackPanel>
-                                    <CheckBox x:Name="EmptyWorldCheckBox" 
-                                              Content="Empty World" 
-                                              Margin="0,3"
-                                              Checked="LaunchOption_Changed" 
-                                              Unchecked="LaunchOption_Changed"/>
-                                    <CheckBox x:Name="NoPauseCheckBox" 
-                                              Content="No Pause (Alt+Tab)" 
-                                              Margin="0,3"
-                                              Checked="LaunchOption_Changed" 
-                                              Unchecked="LaunchOption_Changed"/>
-                                    <CheckBox x:Name="NoPauseAudioCheckBox" 
-                                              Content="No Pause Audio" 
-                                              Margin="0,3"
-                                              Checked="LaunchOption_Changed" 
-                                              Unchecked="LaunchOption_Changed"/>
-                                </StackPanel>
-                            </GroupBox>
-                            
-                            <GroupBox Header="Development Options" Padding="10" Margin="0,0,0,10">
-                                <StackPanel>
-                                    <CheckBox x:Name="ShowScriptErrorsCheckBox" 
-                                              Content="Show Script Errors" 
-                                              Margin="0,3"
-                                              Checked="LaunchOption_Changed" 
-                                              Unchecked="LaunchOption_Changed"/>
-                                    <CheckBox x:Name="FilePatchingCheckBox" 
-                                              Content="File Patching" 
-                                              Margin="0,3"
-                                              Checked="LaunchOption_Changed" 
-                                              Unchecked="LaunchOption_Changed"/>
-                                    <CheckBox x:Name="NoLogsCheckBox" 
-                                              Content="No Logs" 
-                                              Margin="0,3"
-                                              Checked="LaunchOption_Changed" 
-                                              Unchecked="LaunchOption_Changed"/>
-                                </StackPanel>
-                            </GroupBox>
-                        </StackPanel>
-                    </ScrollViewer>
-                    
-                    <GridSplitter Grid.Column="1" 
-                                  Width="5" 
-                                  HorizontalAlignment="Stretch" 
-                                  Background="#FFD0D0D0"/>
-                    
-                    <!-- Right side: Parameters Preview -->
-                    <Grid Grid.Column="2" Margin="10">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        
-                        <GroupBox Grid.Row="0" Header="Generated Launch Parameters" Padding="5" Margin="0,0,0,5">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <TextBlock x:Name="RunParametersTextBlock" 
-                                           TextWrapping="Wrap" 
-                                           Padding="5" 
-                                           FontFamily="Consolas"
-                                           FontSize="11"/>
-                            </ScrollViewer>
-                        </GroupBox>
-                        
-                        <GroupBox Grid.Row="1" Header="Additional Custom Parameters" Padding="5" Margin="0,5,0,0">
-                            <TextBox x:Name="AdditionalParametersTextBox" 
-                                     TextWrapping="Wrap" 
-                                     AcceptsReturn="True" 
-                                     VerticalScrollBarVisibility="Auto" 
-                                     TextChanged="AdditionalParametersTextBox_TextChanged"
-                                     FontFamily="Consolas"
-                                     FontSize="11"/>
-                        </GroupBox>
-                    </Grid>
-                </Grid>
-            </TabItem>
-            
-            <TabItem Header="Repositories">
-                <Grid Background="#FFE5E5E5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <GroupBox Grid.Column="0" Header="FTP Repositories" Margin="10" Padding="5">
-                        <ListView x:Name="RepositoriesListView">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Width="40">
-                                        <GridViewColumn.Header>
-                                            <TextBlock Text="Active" ToolTip="Enable repository for syncing"/>
-                                        </GridViewColumn.Header>
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <CheckBox IsChecked="{Binding IsEnabled}" HorizontalAlignment="Center"/>
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Header="Repository Name" Width="200" DisplayMemberBinding="{Binding Name}"/>
-                                    <GridViewColumn Header="URL" Width="250" DisplayMemberBinding="{Binding Url}"/>
-                                    <GridViewColumn Header="Port" Width="60" DisplayMemberBinding="{Binding Port}"/>
-                                    <GridViewColumn Header="Username" Width="120" DisplayMemberBinding="{Binding Username}"/>
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
-                    </GroupBox>
-                    
-                    <StackPanel Grid.Column="1" Margin="0,10,10,10" Width="140">
-                        <Button x:Name="AddRepositoryButton" 
-                                Content="Add Repository" 
-                                Margin="0,0,0,10" 
-                                Height="35" 
-                                Click="AddRepositoryButton_Click"/>
-                        <Button x:Name="EditRepositoryButton" 
-                                Content="Edit Repository" 
-                                Margin="0,0,0,10" 
-                                Height="35" 
-                                Click="EditRepositoryButton_Click"/>
-                        <Button x:Name="RemoveRepositoryButton" 
-                                Content="Remove Repository" 
-                                Margin="0,0,0,10" 
-                                Height="35" 
-                                Click="RemoveRepositoryButton_Click"/>
-                        <Separator Margin="0,5"/>
-                        <Button x:Name="RefreshRepositoryButton" 
-                                Content="Test Connection" 
-                                Margin="0,10,0,0" 
-                                Height="35" 
-                                Click="RefreshRepositoryButton_Click"/>
+
+            <TabItem Header="Manage Events">
+                <Grid Background="#1E1E1E" Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListBox x:Name="ManageEventsListBox" Grid.Row="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
+                                        <TextBlock Foreground="#999">
+                                            <Run Text="{Binding ModFolders.Count, Mode=OneWay}"/>
+                                            <Run Text=" mod folder(s)"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Edit" Style="{StaticResource ActionButton}"
+                                            Margin="10,0" Padding="15,5" Click="EditEvent_Click" Tag="{Binding}"/>
+                                    <Button Grid.Column="2" Content="Delete" Padding="15,5"
+                                            Click="DeleteEvent_Click" Tag="{Binding}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource ActionButton}">
+                                                <Setter Property="Background" Value="#B73A3A"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#D84848"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                        <Button Style="{StaticResource ActionButton}" Content="Add Event" Click="AddEvent_Click" Width="150"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
         </TabControl>
-
-
-        <Border Grid.Row="1" Background="#FF2D2D30" BorderBrush="#FF3F3F46" BorderThickness="0,1,0,0" Height="50">
-            <Grid Margin="10,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                
-                <TextBlock Grid.Column="0" 
-                           VerticalAlignment="Center" 
-                           Foreground="White" 
-                           FontSize="12">
-                    <Run Text="Ready to launch. Configure your mods and parameters above."/>
-                </TextBlock>
-                
-                <Button x:Name="LaunchButton" 
-                        Grid.Column="1"
-                        Content="🚀 Launch Arma 3" 
-                        Width="150" 
-                        Height="35" 
-                        Click="LaunchButton_Click" 
-                        FontWeight="Bold"
-                        FontSize="14"
-                        Background="#FF0078D7"
-                        Foreground="White"
-                        BorderThickness="0"
-                        Cursor="Hand">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Background" Value="#FF0078D7"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" 
-                                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                CornerRadius="3">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#FF1E88E5"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Background" Value="#FF005A9E"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-            </Grid>
-        </Border>
-
     </Grid>
 </Window>

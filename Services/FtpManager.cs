@@ -357,5 +357,72 @@ namespace Arma_3_LTRM.Services
                 return false;
             }
         }
+
+        public class FtpBrowseItem
+        {
+            public string Name { get; set; } = string.Empty;
+            public string FullPath { get; set; } = string.Empty;
+            public bool IsDirectory { get; set; }
+        }
+
+        public async Task<List<FtpBrowseItem>> BrowseDirectoryAsync(string ftpUrl, int port, string username, string password, string path = "/")
+        {
+            return await Task.Run(() =>
+            {
+                var items = new List<FtpBrowseItem>();
+                try
+                {
+                    var ftpUri = new Uri($"ftp://{ftpUrl}:{port}{path}");
+                    if (!ftpUri.AbsolutePath.EndsWith("/"))
+                    {
+                        ftpUri = new Uri(ftpUri.ToString() + "/");
+                    }
+
+                    var ftpItems = GetDirectoryListing(ftpUri, username, password);
+                    
+                    foreach (var item in ftpItems)
+                    {
+                        if (item.Name == "." || item.Name == "..")
+                            continue;
+
+                        var fullPath = path.TrimEnd('/') + "/" + item.Name;
+                        
+                        items.Add(new FtpBrowseItem
+                        {
+                            Name = item.Name,
+                            FullPath = fullPath,
+                            IsDirectory = item.IsDirectory
+                        });
+                    }
+                }
+                catch
+                {
+                    // Silently fail for browsing
+                }
+                return items;
+            });
+        }
+
+        public async Task DownloadFolderAsync(string ftpUrl, int port, string username, string password, string remotePath, string localPath, IProgress<string>? progress = null)
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    var ftpUri = new Uri($"ftp://{ftpUrl}:{port}{remotePath}");
+                    if (!ftpUri.AbsolutePath.EndsWith("/"))
+                    {
+                        ftpUri = new Uri(ftpUri.ToString() + "/");
+                    }
+
+                    progress?.Report($"Downloading folder: {remotePath}");
+                    DownloadDirectory(ftpUri, username, password, localPath, progress);
+                }
+                catch (Exception ex)
+                {
+                    progress?.Report($"Error downloading folder {remotePath}: {ex.Message}");
+                }
+            });
+        }
     }
 }

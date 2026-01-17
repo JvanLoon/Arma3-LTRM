@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET10_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NET9_0_OR_GREATER;NET10_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
 E:\Development\Repos\Arma3-LTRM\App.xaml
-4-328030662
+7-1499276097
 
-14-735652655
+22-439436110
 2141900907832
-Views\AddRepositoryWindow.xaml;Views\DownloadProgressWindow.xaml;Views\MainWindow.xaml;Views\ModListSelectionWindow.xaml;
+Views\AddEditEventWindow.xaml;Views\AddRepositoryWindow.xaml;Views\DownloadProgressWindow.xaml;Views\MainWindow.xaml;Views\ModListSelectionWindow.xaml;Views\SettingsWindow.xaml;Views\SimpleProgressWindow.xaml;
 
-True
+False
 
