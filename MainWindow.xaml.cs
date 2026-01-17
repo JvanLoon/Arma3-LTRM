@@ -120,21 +120,10 @@ namespace Arma_3_LTRM
                     parameterString += " " + string.Join(" ", additionalParams);
                 }
 
-                // Create temp folder with ARMA3_LTSYNC parent folder and date subfolder
-                string tempPath = Path.GetTempPath();
-                string armaFolderPath = Path.Combine(tempPath, ARMA3_LTSYNC_FOLDER_NAME);
-                string dateFolder = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string tempFolderPath = Path.Combine(armaFolderPath, dateFolder);
-                Directory.CreateDirectory(tempFolderPath);
-
-                // Create parameter file
-                string parameterFilePath = Path.Combine(tempFolderPath, "parameters.txt");
-                File.WriteAllText(parameterFilePath, parameterString);
-
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = _armaExeLocation,
-                    Arguments = $"-par=\"{parameterFilePath}\"",
+                    Arguments = parameterString,
                     UseShellExecute = false,
                     WorkingDirectory = Path.GetDirectoryName(_armaExeLocation)
                 };
