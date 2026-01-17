@@ -3,16 +3,16 @@
   "WorkspaceRootPath": "E:\\Development\\Repos\\Arma3-LTRM\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\gitignore .gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
-      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:gitignore .gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{71D7D760-E6C3-41D7-B1B9-1024EF3C081A}|Solution Items{71D7D760-E6C3-41D7-B1B9-1024EF3C081A}|E:\\Development\\Repos\\Arma3-LTRM\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
-      "RelativeMoniker": "D:0:0:{71D7D760-E6C3-41D7-B1B9-1024EF3C081A}|Solution Items{71D7D760-E6C3-41D7-B1B9-1024EF3C081A}|solutionrelative:.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
+      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|e:\\development\\repos\\arma3-ltrm\\app.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9042305C-7EDF-AF46-A81D-26E58D9ACCF7}|Arma 3 LTRM.csproj|solutionrelative:app.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,49 +22,45 @@
       "DocumentGroups": [
         {
           "DockedHeight": 254,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "gitignore .gitignore",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\gitignore .gitignore",
-              "RelativeDocumentMoniker": "gitignore .gitignore",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\gitignore .gitignore",
-              "RelativeToolTip": "gitignore .gitignore",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-01-17T11:05:21.036Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 1,
-              "Title": ".gitignore",
-              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\.gitignore",
-              "RelativeDocumentMoniker": ".gitignore",
-              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\.gitignore",
-              "RelativeToolTip": ".gitignore",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-01-17T11:05:17.825Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
               "Title": "MainWindow.xaml",
               "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\MainWindow.xaml",
               "RelativeDocumentMoniker": "MainWindow.xaml",
               "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\MainWindow.xaml",
               "RelativeToolTip": "MainWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-01-10T18:13:02.538Z",
+              "WhenOpened": "2026-01-17T11:08:12.495Z",
               "EditorCaption": ""
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "MainWindow.xaml.cs",
+              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\MainWindow.xaml.cs",
+              "RelativeToolTip": "MainWindow.xaml.cs",
+              "ViewState": "AgIAACcAAAAAAAAAAAAowFMAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-17T11:07:22.364Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "App.xaml.cs",
+              "DocumentMoniker": "E:\\Development\\Repos\\Arma3-LTRM\\App.xaml.cs",
+              "RelativeDocumentMoniker": "App.xaml.cs",
+              "ToolTip": "E:\\Development\\Repos\\Arma3-LTRM\\App.xaml.cs",
+              "RelativeToolTip": "App.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-17T11:06:57.574Z",
+              "EditorCaption": ""
             }
           ]
         }
