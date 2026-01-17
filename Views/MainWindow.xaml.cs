@@ -177,16 +177,25 @@ namespace Arma_3_LTRM.Views
 
                 foreach (var modFolder in evt.ModFolders)
                 {
+                    var repository = _repositoryManager.Repositories.FirstOrDefault(r => r.Id == modFolder.RepositoryId);
+                    if (repository == null)
+                    {
+                        progressWindow.Close();
+                        MessageBox.Show($"Repository not found for folder '{modFolder.FolderPath}'.\n\nPlease check your repository configuration.", 
+                            "Repository Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
                     // Maintain full folder structure from FTP path
                     // e.g., /mods/xyz/@ACE becomes eventBasePath/mods/xyz/@ACE
                     var relativePath = modFolder.FolderPath.TrimStart('/');
                     var localPath = Path.Combine(_settingsManager.Settings.BaseDownloadLocation, relativePath);
                     
                     await _ftpManager.DownloadFolderAsync(
-                        modFolder.FtpUrl,
-                        modFolder.Port,
-                        modFolder.Username,
-                        modFolder.Password,
+                        repository.Url,
+                        repository.Port,
+                        repository.Username,
+                        repository.Password,
                         modFolder.FolderPath,
                         localPath,
                         progress
@@ -219,16 +228,25 @@ namespace Arma_3_LTRM.Views
 
                 foreach (var modFolder in evt.ModFolders)
                 {
+                    var repository = _repositoryManager.Repositories.FirstOrDefault(r => r.Id == modFolder.RepositoryId);
+                    if (repository == null)
+                    {
+                        progressWindow.Close();
+                        MessageBox.Show($"Repository not found for folder '{modFolder.FolderPath}'.\n\nPlease check your repository configuration.", 
+                            "Repository Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
                     // Maintain full folder structure from FTP path
                     // e.g., /mods/xyz/@ACE becomes eventBasePath/mods/xyz/@ACE
                     var relativePath = modFolder.FolderPath.TrimStart('/');
                     var localPath = Path.Combine(_settingsManager.Settings.BaseDownloadLocation, relativePath);
                     
                     await _ftpManager.DownloadFolderAsync(
-                        modFolder.FtpUrl,
-                        modFolder.Port,
-                        modFolder.Username,
-                        modFolder.Password,
+                        repository.Url,
+                        repository.Port,
+                        repository.Username,
+                        repository.Password,
                         modFolder.FolderPath,
                         localPath,
                         progress

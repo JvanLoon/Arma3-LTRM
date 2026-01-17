@@ -7,6 +7,7 @@ namespace Arma_3_LTRM.Services
 {
     public class EventManager
     {
+        private const string SETTINGS_FOLDER = "Settings";
         private const string EVENTS_FOLDER = "Events";
         public ObservableCollection<Event> Events { get; private set; }
 
@@ -37,12 +38,13 @@ namespace Arma_3_LTRM.Services
         {
             try
             {
-                if (!Directory.Exists(EVENTS_FOLDER))
+                var eventsPath = Path.Combine(SETTINGS_FOLDER, EVENTS_FOLDER);
+                if (!Directory.Exists(eventsPath))
                 {
-                    Directory.CreateDirectory(EVENTS_FOLDER);
+                    Directory.CreateDirectory(eventsPath);
                 }
 
-                var fileName = Path.Combine(EVENTS_FOLDER, $"{SanitizeFileName(eventItem.Name)}.json");
+                var fileName = Path.Combine(eventsPath, $"{SanitizeFileName(eventItem.Name)}.json");
                 var options = new JsonSerializerOptions
                 {
                     WriteIndented = true

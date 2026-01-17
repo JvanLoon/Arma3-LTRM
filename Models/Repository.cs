@@ -4,12 +4,26 @@ namespace Arma_3_LTRM.Models
 {
     public class Repository : INotifyPropertyChanged
     {
+        private Guid _id;
         private bool _isEnabled;
         private string _name;
         private string _url;
         private int _port;
         private string _username;
         private string _password;
+
+        public Guid Id
+        {
+            get => _id;
+            set
+            {
+                if (_id != value)
+                {
+                    _id = value;
+                    OnPropertyChanged(nameof(Id));
+                }
+            }
+        }
 
         public bool IsEnabled
         {

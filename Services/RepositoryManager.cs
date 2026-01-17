@@ -7,6 +7,7 @@ namespace Arma_3_LTRM.Services
 {
     public class RepositoryManager
     {
+        private const string SETTINGS_FOLDER = "Settings";
         private const string REPOSITORIES_FILE = "repositories.json";
         public ObservableCollection<Repository> Repositories { get; private set; }
 

@@ -112,15 +112,20 @@
 
             <StackPanel Grid.Column="0">
                 <TextBlock Text="Repository Folders (Check to add)" FontWeight="Bold" Margin="0,0,0,8"/>
-                <TextBlock x:Name="BrowseStatusText" Text="Select a repository and click 'Browse Repository Folders'" 
+                <TextBlock x:Name="BrowseStatusText" Text="Select a repository and click 'Browse Repository Folders' (only @ folders can be checked)" 
                            Foreground="#999" FontSize="12" Margin="0,0,0,5"/>
                 <TreeView x:Name="FtpTreeView" Height="350">
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="TreeViewItem">
+                            <Setter Property="Foreground" Value="#E0E0E0"/>
+                            <EventSetter Event="Expanded" Handler="TreeViewItem_Expanded"/>
+                        </Style>
+                    </TreeView.ItemContainerStyle>
                     <TreeView.ItemTemplate>
                         <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                             <StackPanel Orientation="Horizontal">
                                 <CheckBox IsChecked="{Binding IsChecked}" 
-                                          Checked="TreeViewCheckBox_Changed"
-                                          Unchecked="TreeViewCheckBox_Changed"
+                                          IsEnabled="{Binding IsSelectable}"
                                           Margin="0,0,5,0"/>
                                 <TextBlock Text="{Binding Name}" Foreground="#E0E0E0"/>
                             </StackPanel>

@@ -50,74 +50,18 @@ namespace Arma_3_LTRM.Models
 
     public class ModFolder : INotifyPropertyChanged
     {
-        private string _repositoryName;
-        private string _ftpUrl;
-        private int _port;
-        private string _username;
-        private string _password;
+        private Guid _repositoryId;
         private string _folderPath;
 
-        public string RepositoryName
+        public Guid RepositoryId
         {
-            get => _repositoryName;
+            get => _repositoryId;
             set
             {
-                if (_repositoryName != value)
+                if (_repositoryId != value)
                 {
-                    _repositoryName = value;
-                    OnPropertyChanged(nameof(RepositoryName));
-                }
-            }
-        }
-
-        public string FtpUrl
-        {
-            get => _ftpUrl;
-            set
-            {
-                if (_ftpUrl != value)
-                {
-                    _ftpUrl = value;
-                    OnPropertyChanged(nameof(FtpUrl));
-                }
-            }
-        }
-
-        public int Port
-        {
-            get => _port;
-            set
-            {
-                if (_port != value)
-                {
-                    _port = value;
-                    OnPropertyChanged(nameof(Port));
-                }
-            }
-        }
-
-        public string Username
-        {
-            get => _username;
-            set
-            {
-                if (_username != value)
-                {
-                    _username = value;
-                    OnPropertyChanged(nameof(Username));
-                }
-            }
-        }
-
-        public string Password
-        {
-            get => _password;
-            set
-            {
-                if (_password != value)
-                {
-                    _password = value;
-                    OnPropertyChanged(nameof(Password));
+                    _repositoryId = value;
+                    OnPropertyChanged(nameof(RepositoryId));
                 }
             }
         }
@@ -137,11 +81,7 @@ namespace Arma_3_LTRM.Models
 
         public ModFolder()
         {
-            _repositoryName = string.Empty;
-            _ftpUrl = string.Empty;
-            _port = 21;
-            _username = string.Empty;
-            _password = string.Empty;
+            _repositoryId = Guid.Empty;
             _folderPath = string.Empty;
         }
 

@@ -14,12 +14,14 @@ namespace Arma_3_LTRM.Views
         private readonly FtpManager _ftpManager;
         public Event Event { get; private set; }
         private Repository? _currentBrowsingRepo;
+        private ObservableCollection<ModFolderDisplayItem> _displayItems;
 
         public AddEditEventWindow(RepositoryManager repositoryManager, Event? existingEvent = null)
         {
             InitializeComponent();
             _repositoryManager = repositoryManager;
             _ftpManager = new FtpManager();
+            _displayItems = new ObservableCollection<ModFolderDisplayItem>();
 
             RepositoryComboBox.ItemsSource = _repositoryManager.Repositories;
 
@@ -27,17 +29,33 @@ namespace Arma_3_LTRM.Views
             {
                 Event = existingEvent;
                 EventNameTextBox.Text = Event.Name;
-                ModFoldersListBox.ItemsSource = Event.ModFolders;
+                UpdateDisplayItems();
             }
             else
             {
                 Event = new Event();
-                ModFoldersListBox.ItemsSource = Event.ModFolders;
             }
+
+            ModFoldersListBox.ItemsSource = _displayItems;
 
             if (_repositoryManager.Repositories.Count > 0)
             {
                 RepositoryComboBox.SelectedIndex = 0;
+            }
+        }
+
+        private void UpdateDisplayItems()
+        {
+            _displayItems.Clear();
+            foreach (var modFolder in Event.ModFolders)
+            {
+                var repo = _repositoryManager.Repositories.FirstOrDefault(r => r.Id == modFolder.RepositoryId);
+                _displayItems.Add(new ModFolderDisplayItem
+                {
+                    ModFolder = modFolder,
+                    RepositoryName = repo?.Name ?? "Unknown Repository",
+                    FolderPath = modFolder.FolderPath
+                });
             }
         }
 
@@ -73,7 +91,8 @@ namespace Arma_3_LTRM.Views
                 }
                 else
                 {
-                    BrowseStatusText.Text = $"Found {rootItems.Count} item(s) - check folders to add them";
+                    var modFolderCount = rootItems.Count(i => i.IsDirectory && i.Name.StartsWith("@"));
+                    BrowseStatusText.Text = $"Found {modFolderCount} mod folder(s) - only @ folders can be checked";
                     
                     foreach (var item in rootItems.Where(i => i.IsDirectory))
                     {
@@ -81,7 +100,8 @@ namespace Arma_3_LTRM.Views
                         {
                             Name = item.Name,
                             FullPath = item.FullPath,
-                            IsDirectory = item.IsDirectory
+                            IsDirectory = item.IsDirectory,
+                            IsSelectable = item.Name.StartsWith("@")
                         };
                         
                         // Add placeholder for lazy loading
@@ -106,11 +126,11 @@ namespace Arma_3_LTRM.Views
             }
         }
 
-        private async void TreeViewCheckBox_Changed(object sender, RoutedEventArgs e)
+        private async void TreeViewItem_Expanded(object sender, RoutedEventArgs e)
         {
             // Lazy load children when expanding a node
-            if (sender is System.Windows.Controls.CheckBox checkBox && 
-                checkBox.DataContext is FtpTreeNode node)
+            if (sender is System.Windows.Controls.TreeViewItem treeViewItem && 
+                treeViewItem.DataContext is FtpTreeNode node)
             {
                 if (node.Children.Count == 1 && node.Children[0].Name == "Loading...")
                 {
@@ -134,7 +154,8 @@ namespace Arma_3_LTRM.Views
                                 {
                                     Name = child.Name,
                                     FullPath = child.FullPath,
-                                    IsDirectory = child.IsDirectory
+                                    IsDirectory = child.IsDirectory,
+                                    IsSelectable = child.Name.StartsWith("@")
                                 };
                                 
                                 childNode.Children.Add(new FtpTreeNode { Name = "Loading..." });
@@ -162,16 +183,12 @@ namespace Arma_3_LTRM.Views
             {
                 // Check if already added
                 if (Event.ModFolders.Any(mf => mf.FolderPath == item.FullPath && 
-                                               mf.RepositoryName == _currentBrowsingRepo.Name))
+                                               mf.RepositoryId == _currentBrowsingRepo.Id))
                     continue;
 
                 var modFolder = new ModFolder
                 {
-                    RepositoryName = _currentBrowsingRepo.Name,
-                    FtpUrl = _currentBrowsingRepo.Url,
-                    Port = _currentBrowsingRepo.Port,
-                    Username = _currentBrowsingRepo.Username,
-                    Password = _currentBrowsingRepo.Password,
+                    RepositoryId = _currentBrowsingRepo.Id,
                     FolderPath = item.FullPath
                 };
 
@@ -182,6 +199,7 @@ namespace Arma_3_LTRM.Views
 
             if (addedCount > 0)
             {
+                UpdateDisplayItems();
                 MessageBox.Show($"Added {addedCount} folder(s) to the event.", "Folders Added",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -209,9 +227,10 @@ namespace Arma_3_LTRM.Views
 
         private void RemoveFolderButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is ModFolder modFolder)
+            if (sender is Button button && button.Tag is ModFolderDisplayItem displayItem)
             {
-                Event.ModFolders.Remove(modFolder);
+                Event.ModFolders.Remove(displayItem.ModFolder);
+                UpdateDisplayItems();
             }
         }
 
@@ -251,6 +270,7 @@ namespace Arma_3_LTRM.Views
         public string Name { get; set; } = string.Empty;
         public string FullPath { get; set; } = string.Empty;
         public bool IsDirectory { get; set; }
+        public bool IsSelectable { get; set; } = true;
         
         public bool IsChecked
         {
@@ -274,4 +294,14 @@ namespace Arma_3_LTRM.Views
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
+
+    // Display wrapper for ModFolder to show repository name
+    public class ModFolderDisplayItem
+    {
+        public ModFolder ModFolder { get; set; } = null!;
+        public string RepositoryName { get; set; } = string.Empty;
+        public string FolderPath { get; set; } = string.Empty;
+    }
 }
+
+
