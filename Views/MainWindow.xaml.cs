@@ -506,11 +506,8 @@ namespace Arma_3_LTRM.Views
             if (selectedLocation == null)
                 return;
 
-            var downloadPaths = new List<string>();
             foreach (var repo in selectedRepos)
             {
-                downloadPaths.Add(selectedLocation);
-
                 var progressWindow = new DownloadProgressWindow();
                 progressWindow.Owner = this;
 
@@ -528,7 +525,7 @@ namespace Arma_3_LTRM.Views
                 }
             }
 
-            LaunchArma3(downloadPaths);
+            LaunchArma3();
         }
 
         private async void DownloadRepository_Click(object sender, RoutedEventArgs e)
@@ -574,7 +571,7 @@ namespace Arma_3_LTRM.Views
             if (!ValidateArma3Path())
                 return;
 
-            var downloadPaths = new List<string>();
+            // Verify all repositories exist in download locations
             foreach (var repo in selectedRepos)
             {
                 var foundPath = FindRepositoryInLocations(repo.Name);
@@ -584,10 +581,9 @@ namespace Arma_3_LTRM.Views
                         "Repository Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
-                downloadPaths.Add(foundPath);
             }
 
-            LaunchArma3(downloadPaths);
+            LaunchArma3();
         }
 
         private async void DownloadLaunchEvent_Click(object sender, RoutedEventArgs e)
@@ -607,7 +603,6 @@ namespace Arma_3_LTRM.Views
             if (selectedLocation == null)
                 return;
 
-            var eventPaths = new List<string>();
             foreach (var evt in selectedEvents)
             {
                 var progressWindow = new DownloadProgressWindow();
@@ -655,10 +650,9 @@ namespace Arma_3_LTRM.Views
                 }
 
                 progressWindow.Close();
-                eventPaths.Add(selectedLocation);
             }
 
-            LaunchArma3WithEvent(selectedEvents[0], eventPaths[0]);
+            LaunchArma3();
         }
 
         private async void DownloadEvent_Click(object sender, RoutedEventArgs e)
@@ -751,6 +745,7 @@ namespace Arma_3_LTRM.Views
             if (!ValidateArma3Path())
                 return;
 
+            // Verify all events exist in download locations
             foreach (var evt in checkedEvents)
             {
                 var foundPath = FindEventInLocations(evt);
@@ -760,9 +755,9 @@ namespace Arma_3_LTRM.Views
                         "Event Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
-
-                LaunchArma3WithEvent(evt, foundPath);
             }
+
+            LaunchArma3();
         }
 
         private async void DownloadRepositoryItem_Click(object sender, RoutedEventArgs e)
@@ -1091,35 +1086,11 @@ namespace Arma_3_LTRM.Views
             return null;
         }
 
-        private void LaunchArma3(List<string> modPaths)
+        private void LaunchArma3()
         {
             try
             {
-                var modFolders = new List<string>();
-                
-                foreach (var basePath in modPaths)
-                {
-                    if (Directory.Exists(basePath))
-                    {
-                        var directories = Directory.GetDirectories(basePath, "*", SearchOption.AllDirectories);
-                        foreach (var dir in directories)
-                        {
-                            if (Path.GetFileName(dir).StartsWith("@"))
-                            {
-                                modFolders.Add(dir);
-                            }
-                        }
-                    }
-                }
-
-                if (modFolders.Count == 0)
-                {
-                    MessageBox.Show("No mod folders found (folders starting with '@').", 
-                        "No Mods Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                _launchParametersManager.UpdateModsList(modFolders);
+                // Get the final parameters that are already built by UpdateParametersDisplay
                 var customParams = CustomParametersTextBox.Text;
                 var arguments = _launchParametersManager.GetParametersString(customParams).Replace(Environment.NewLine, " ");
 
@@ -1143,97 +1114,13 @@ namespace Arma_3_LTRM.Views
 
                 Process.Start(processInfo);
 
-                var message = $"Arma 3 launched with {modFolders.Count} mod(s)!";
+                var message = "Arma 3 launched successfully!";
                 if (checkedServer != null)
                 {
                     message += $"\nConnecting to: {checkedServer.Name}";
                 }
 
                 MessageBox.Show(message, "Launch Successful", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to launch Arma 3: {ex.Message}", 
-                    "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void LaunchArma3WithEvent(Event evt, string basePath)
-        {
-            try
-            {
-                var arma3Dir = Path.GetDirectoryName(_settingsManager.Settings.Arma3ExePath);
-                if (string.IsNullOrEmpty(arma3Dir))
-                {
-                    MessageBox.Show("Invalid Arma 3 executable path.", 
-                        "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
-                var modFolders = new List<string>();
-                
-                foreach (var modFolder in evt.ModFolders)
-                {
-                    if (modFolder.ItemType == ModItemType.DLC)
-                    {
-                        // DLC folders are in the Arma 3 directory
-                        var dlcPath = Path.Combine(arma3Dir, modFolder.FolderPath);
-                        if (Directory.Exists(dlcPath))
-                        {
-                            modFolders.Add(modFolder.FolderPath);
-                        }
-                    }
-                    else if (modFolder.ItemType == ModItemType.Workshop)
-                    {
-                        // Workshop items are in the !Workshop folder
-                        var workshopPath = Path.Combine(arma3Dir, "!Workshop", modFolder.FolderPath);
-                        if (Directory.Exists(workshopPath))
-                        {
-                            modFolders.Add(workshopPath);
-                        }
-                    }
-                    else
-                    {
-                        // Repository folders
-                        var relativePath = modFolder.FolderPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-                        var localPath = Path.Combine(basePath, relativePath);
-                        if (Directory.Exists(localPath))
-                        {
-                            modFolders.Add(localPath);
-                        }
-                    }
-                }
-
-                if (modFolders.Count == 0)
-                {
-                    MessageBox.Show("No mod folders found for this event.", 
-                        "No Mods Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                _launchParametersManager.UpdateModsList(modFolders);
-                var customParams = CustomParametersTextBox.Text;
-                var arguments = _launchParametersManager.GetParametersString(customParams).Replace(Environment.NewLine, " ");
-
-                // Add server connection parameters if a server is selected
-                var checkedServer = _serverManager.Servers.FirstOrDefault(s => s.IsChecked);
-                if (checkedServer != null)
-                {
-                    arguments += $" -connect={checkedServer.Address} -port={checkedServer.Port}";
-                    if (!string.IsNullOrWhiteSpace(checkedServer.Password))
-                    {
-                        arguments += $" -password={checkedServer.Password}";
-                    }
-                }
-
-                var processInfo = new ProcessStartInfo
-                {
-                    FileName = _settingsManager.Settings.Arma3ExePath,
-                    Arguments = arguments,
-                    UseShellExecute = false
-                };
-
-                Process.Start(processInfo);
             }
             catch (Exception ex)
             {
