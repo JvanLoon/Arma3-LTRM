@@ -76,7 +76,7 @@
 
         <StackPanel Grid.Row="4">
             <TextBlock Text="Port" FontWeight="Bold" Margin="0,0,0,5"/>
-            <TextBox x:Name="PortTextBox" Text="2302"/>
+            <TextBox x:Name="PortTextBox" Text="2302" />
         </StackPanel>
 
         <StackPanel Grid.Row="6">
