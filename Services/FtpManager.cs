@@ -1136,6 +1136,76 @@ namespace Arma_3_LTRM.Services
                             IsDirectory = item.IsDirectory
                         });
                     }
+                    
+                    // Save browse results to cache if repositoryId is provided
+                    if (!string.IsNullOrEmpty(repositoryId))
+                    {
+                        try
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Merging browse results for {path} into cache for repository {repositoryId}");
+                            
+                            // Load existing cache or create new one
+                            var existingCache = _cacheManager.LoadCache(repositoryId);
+                            
+                            Dictionary<string, List<CachedFtpItem>> cacheDict;
+                            string repositoryName;
+                            string snapshot;
+                            
+                            if (existingCache != null && !existingCache.IsExpired())
+                            {
+                                // Merge with existing cache
+                                cacheDict = existingCache.DirectoryCache;
+                                repositoryName = existingCache.RepositoryName;
+                                snapshot = existingCache.RepositorySnapshot;
+                                System.Diagnostics.Debug.WriteLine($"Merging into existing cache with {cacheDict.Count} directories");
+                            }
+                            else
+                            {
+                                // Create new cache
+                                cacheDict = new Dictionary<string, List<CachedFtpItem>>();
+                                repositoryName = $"Repository_{repositoryId}";
+                                
+                                // Generate snapshot hash
+                                var snapshotData = $"{ftpUrl}:{port}:{username}";
+                                using var sha256 = System.Security.Cryptography.SHA256.Create();
+                                var bytes = System.Text.Encoding.UTF8.GetBytes(snapshotData);
+                                var hash = sha256.ComputeHash(bytes);
+                                snapshot = Convert.ToBase64String(hash);
+                                System.Diagnostics.Debug.WriteLine($"Creating new cache");
+                            }
+                            
+                            // Add/update this path in cache
+                            cacheDict[path] = ftpItems.Select(item => new CachedFtpItem
+                            {
+                                Name = item.Name,
+                                FullPath = path.TrimEnd('/') + "/" + item.Name,
+                                IsDirectory = item.IsDirectory,
+                                Size = item.Size,
+                                LastModified = item.LastModified
+                            }).Where(i => i.Name != "." && i.Name != "..").ToList();
+                            
+                            // Save updated cache
+                            var cacheData = new CachedRepositoryData
+                            {
+                                RepositoryId = repositoryId,
+                                RepositoryName = repositoryName,
+                                LastScanned = DateTime.Now,
+                                ExpiresAt = DateTime.Now.Add(_cacheLifetime),
+                                RepositorySnapshot = snapshot,
+                                DirectoryCache = cacheDict,
+                                TotalFiles = cacheDict.Values.Sum(x => x.Count(i => !i.IsDirectory)),
+                                TotalDirectories = cacheDict.Count,
+                                TotalSizeBytes = cacheDict.Values.SelectMany(x => x).Sum(x => x.Size)
+                            };
+                            
+                            _cacheManager.SaveCache(cacheData);
+                            System.Diagnostics.Debug.WriteLine($"? Saved browse cache for {path} (total: {cacheData.TotalDirectories} dirs, {cacheData.TotalFiles} files)");
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Failed to save browse cache: {ex.Message}");
+                        }
+                    }
                 }
                 catch
                 {

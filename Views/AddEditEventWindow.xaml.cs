@@ -68,19 +68,21 @@ namespace Arma_3_LTRM.Views
         private async void PreloadAllRepositories()
         {
             // _isPreloading is already set to true in the constructor before this is called
+            System.Diagnostics.Debug.WriteLine($"=== PRELOAD START: {_repositoryManager.Repositories.Count} repositories ===");
             
             foreach (var repository in _repositoryManager.Repositories)
             {
                 if (_repositoryCache.ContainsKey(repository.Id))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SKIP] {repository.Name} - already in memory cache");
                     continue;
+                }
 
                 try
                 {
+                    System.Diagnostics.Debug.WriteLine($"[LOADING] {repository.Name} (ID: {repository.Id})");
                     var rootItems = await _ftpManager.BrowseDirectoryAsync(
-                        repository.Url,
-                        repository.Port,
-                        repository.Username,
-                        repository.Password,
+                        repository,
                         "/"
                     );
 
@@ -106,19 +108,23 @@ namespace Arma_3_LTRM.Views
                     }
 
                     _repositoryCache[repository.Id] = nodes;
+                    System.Diagnostics.Debug.WriteLine($"[CACHED] {repository.Name} - {nodes.Count} items in memory");
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] {repository.Name}: {ex.Message}");
                     // Silent fail for background loading
                 }
             }
 
             _isPreloading = false;
+            System.Diagnostics.Debug.WriteLine("=== PRELOAD COMPLETE ===");
 
             // Refresh the current view if a repository is selected and TreeView is empty
             // This prevents duplicate loading if SelectionChanged already loaded it
             if (RepositoryComboBox.SelectedItem is Repository selectedRepo && FtpTreeView.Items.Count == 0)
             {
+                System.Diagnostics.Debug.WriteLine($"[REFRESH] Loading selected repo: {selectedRepo.Name}");
                 LoadCachedRepository(selectedRepo);
             }
         }
@@ -208,12 +214,15 @@ namespace Arma_3_LTRM.Views
 
         private async void LoadCachedRepository(Repository repository)
         {
+            System.Diagnostics.Debug.WriteLine($"[LoadCached] Repository: {repository.Name}, InMemoryCache: {_repositoryCache.ContainsKey(repository.Id)}, IsPreloading: {_isPreloading}");
+            
             FtpTreeView.Items.Clear();
             AddSelectedButton.IsEnabled = false;
 
             if (_repositoryCache.ContainsKey(repository.Id))
             {
-                // Load from cache
+                // Load from in-memory cache
+                System.Diagnostics.Debug.WriteLine($"[LoadCached] Using in-memory cache for {repository.Name}");
                 var nodes = _repositoryCache[repository.Id];
                 foreach (var node in nodes)
                 {
@@ -221,21 +230,20 @@ namespace Arma_3_LTRM.Views
                 }
 
                 var modFolderCount = nodes.Count(n => n.IsSelectable);
-                BrowseStatusText.Text = $"Found {modFolderCount} mod folder(s) - only @ folders can be checked";
+                var cacheInfo = _ftpManager.GetCacheInfo(repository.Id.ToString());
+                BrowseStatusText.Text = $"Found {modFolderCount} mod folder(s) | Cache: {cacheInfo}";
                 AddSelectedButton.IsEnabled = true;
             }
             else if (!_isPreloading)
             {
                 // Load if not in cache and not currently preloading
+                System.Diagnostics.Debug.WriteLine($"[LoadCached] Not in memory cache, loading from FTP/disk cache...");
                 BrowseStatusText.Text = $"Loading {repository.Name}...";
                 
                 try
                 {
                     var rootItems = await _ftpManager.BrowseDirectoryAsync(
-                        repository.Url,
-                        repository.Port,
-                        repository.Username,
-                        repository.Password,
+                        repository,
                         "/"
                     );
 
@@ -268,16 +276,19 @@ namespace Arma_3_LTRM.Views
                     }
 
                     var modFolderCount = nodes.Count(n => n.IsSelectable);
-                    BrowseStatusText.Text = $"Found {modFolderCount} mod folder(s) - only @ folders can be checked";
+                    var cacheInfo = _ftpManager.GetCacheInfo(repository.Id.ToString());
+                    BrowseStatusText.Text = $"Found {modFolderCount} mod folder(s) | Cache: {cacheInfo}";
                     AddSelectedButton.IsEnabled = true;
                 }
                 catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[LoadCached] Error: {ex.Message}");
                     BrowseStatusText.Text = $"Error: {ex.Message}";
                 }
             }
             else
             {
+                System.Diagnostics.Debug.WriteLine($"[LoadCached] Waiting for background preload to complete...");
                 BrowseStatusText.Text = "Loading in background, please wait...";
             }
         }
