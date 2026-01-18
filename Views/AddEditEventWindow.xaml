@@ -5,6 +5,7 @@
         WindowStartupLocation="CenterOwner"
         Background="#1E1E1E">
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="#E0E0E0"/>
             <Setter Property="FontSize" Value="14"/>
@@ -164,6 +165,7 @@
                                             <StackPanel Orientation="Horizontal">
                                                 <CheckBox IsChecked="{Binding IsChecked}" 
                                                           IsEnabled="{Binding IsSelectable}"
+                                                          Visibility="{Binding IsSelectable, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                           Margin="0,0,5,0"/>
                                                 <TextBlock Text="{Binding Name}" Foreground="#E0E0E0"/>
                                             </StackPanel>

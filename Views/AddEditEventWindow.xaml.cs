@@ -93,8 +93,13 @@ namespace Arma_3_LTRM.Views
                             IsSelectable = item.Name.StartsWith("@")
                         };
                         
-                        // Add placeholder for lazy loading
-                        node.Children.Add(new FtpTreeNode { Name = "Loading..." });
+                        // Only add placeholder for lazy loading if it's not a @ folder
+                        // @ folders (mod folders) should not be expandable
+                        if (!item.Name.StartsWith("@"))
+                        {
+                            node.Children.Add(new FtpTreeNode { Name = "Loading..." });
+                        }
+                        
                         nodes.Add(node);
                     }
 
@@ -242,7 +247,13 @@ namespace Arma_3_LTRM.Views
                             IsSelectable = item.Name.StartsWith("@")
                         };
                         
-                        node.Children.Add(new FtpTreeNode { Name = "Loading..." });
+                        // Only add placeholder for lazy loading if it's not a @ folder
+                        // @ folders (mod folders) should not be expandable
+                        if (!item.Name.StartsWith("@"))
+                        {
+                            node.Children.Add(new FtpTreeNode { Name = "Loading..." });
+                        }
+                        
                         nodes.Add(node);
                         FtpTreeView.Items.Add(node);
                     }
@@ -269,6 +280,14 @@ namespace Arma_3_LTRM.Views
             if (sender is System.Windows.Controls.TreeViewItem treeViewItem && 
                 treeViewItem.DataContext is FtpTreeNode node)
             {
+                // Don't allow expanding folders that start with @ (mod folders)
+                if (node.Name.StartsWith("@"))
+                {
+                    // Clear children and mark as expanded so the expand icon goes away
+                    node.Children.Clear();
+                    return;
+                }
+                
                 if (node.Children.Count == 1 && node.Children[0].Name == "Loading...")
                 {
                     node.Children.Clear();
@@ -295,7 +314,12 @@ namespace Arma_3_LTRM.Views
                                     IsSelectable = child.Name.StartsWith("@")
                                 };
                                 
-                                childNode.Children.Add(new FtpTreeNode { Name = "Loading..." });
+                                // Only add placeholder if it's not a @ folder (since @ folders can't be expanded)
+                                if (!childNode.Name.StartsWith("@"))
+                                {
+                                    childNode.Children.Add(new FtpTreeNode { Name = "Loading..." });
+                                }
+                                
                                 node.Children.Add(childNode);
                             }
                         }

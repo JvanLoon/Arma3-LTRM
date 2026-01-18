@@ -181,7 +181,7 @@ namespace Arma_3_LTRM.Services
             if (_modPaths.Count > 0)
             {
                 var modParam = string.Join(";", _modPaths);
-                parameters.Add($"-mod={modParam}");
+                parameters.Add($"-mod=\"{modParam}\"");
             }
 
             return string.Join(Environment.NewLine, parameters);
