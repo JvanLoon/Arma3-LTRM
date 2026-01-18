@@ -274,7 +274,7 @@ namespace Arma_3_LTRM.Views
                             }
                             else
                             {
-                                var relativePath = modFolder.FolderPath.TrimStart('/');
+                                var relativePath = modFolder.FolderPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
                                 var localPath = Path.Combine(eventPath, relativePath);
                                 if (Directory.Exists(localPath))
                                 {
@@ -316,12 +316,14 @@ namespace Arma_3_LTRM.Views
                 if (string.IsNullOrWhiteSpace(finalParams))
                 {
                     FinalParametersTextBox.Text = "(No parameters selected)";
+                    HomeFinalParametersTextBox.Text = "(No parameters selected)";
                 }
                 else
                 {
                     // Replace space before each parameter with newline for better readability
                     var formattedParams = finalParams.Replace(" -", Environment.NewLine + "-");
                     FinalParametersTextBox.Text = formattedParams;
+                    HomeFinalParametersTextBox.Text = formattedParams;
                 }
             }
             finally
@@ -624,7 +626,7 @@ namespace Arma_3_LTRM.Views
 
                     // Maintain full folder structure from FTP path
                     // e.g., /mods/xyz/@ACE becomes eventBasePath/mods/xyz/@ACE
-                    var relativePath = modFolder.FolderPath.TrimStart('/');
+                    var relativePath = modFolder.FolderPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
                     var localPath = Path.Combine(selectedLocation, relativePath);
                     
                     await _ftpManager.DownloadFolderAsync(
@@ -693,7 +695,7 @@ namespace Arma_3_LTRM.Views
 
                         // Maintain full folder structure from FTP path
                         // e.g., /mods/xyz/@ACE becomes eventBasePath/mods/xyz/@ACE
-                        var relativePath = modFolder.FolderPath.TrimStart('/');
+                        var relativePath = modFolder.FolderPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
                         var localPath = Path.Combine(selectedLocation, relativePath);
                         
                         await _ftpManager.DownloadFolderAsync(
@@ -811,7 +813,7 @@ namespace Arma_3_LTRM.Views
 
                         // Maintain full folder structure from FTP path
                         // e.g., /mods/xyz/@ACE becomes eventBasePath/mods/xyz/@ACE
-                        var relativePath = modFolder.FolderPath.TrimStart('/');
+                        var relativePath = modFolder.FolderPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
                         var localPath = Path.Combine(selectedLocation, relativePath);
                         
                         await _ftpManager.DownloadFolderAsync(
@@ -1058,7 +1060,7 @@ namespace Arma_3_LTRM.Views
                     if (modFolder.ItemType == ModItemType.DLC || modFolder.ItemType == ModItemType.Workshop)
                         continue;
 
-                    var relativePath = modFolder.FolderPath.TrimStart('/');
+                    var relativePath = modFolder.FolderPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
                     var localPath = Path.Combine(location, relativePath);
                     if (!Directory.Exists(localPath))
                     {
@@ -1179,7 +1181,7 @@ namespace Arma_3_LTRM.Views
                     else
                     {
                         // Repository folders
-                        var relativePath = modFolder.FolderPath.TrimStart('/');
+                        var relativePath = modFolder.FolderPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
                         var localPath = Path.Combine(basePath, relativePath);
                         if (Directory.Exists(localPath))
                         {

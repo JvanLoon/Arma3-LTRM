@@ -27,6 +27,7 @@ namespace Arma_3_LTRM.Services
 
         private int _skippedFiles = 0;
         private int _downloadedFiles = 0;
+        private int _deletedFiles = 0;
         private readonly int _maxConcurrentDownloads = 8;
         private readonly int _bufferSize = 65536; // 64KB buffer
 
@@ -36,6 +37,7 @@ namespace Arma_3_LTRM.Services
             {
                 _skippedFiles = 0;
                 _downloadedFiles = 0;
+                _deletedFiles = 0;
 
                 progress?.Report($"Connecting to {repository.Url}:{repository.Port}...");
 
@@ -65,7 +67,8 @@ namespace Arma_3_LTRM.Services
                 
                 await DownloadDirectoryFromCache(cache, "/", repository.Username, repository.Password, destinationPath, ftpUri.Host, ftpUri.Port, progress, cancellationToken);
                 
-                progress?.Report($"Sync completed: {_downloadedFiles} files downloaded, {_skippedFiles} files up-to-date");
+                var deletionMessage = _deletedFiles > 0 ? $", {_deletedFiles} files deleted" : "";
+                progress?.Report($"Sync completed: {_downloadedFiles} files downloaded, {_skippedFiles} files up-to-date{deletionMessage}");
                 return true;
             }
             catch (OperationCanceledException)
@@ -153,12 +156,15 @@ namespace Arma_3_LTRM.Services
 
                 // Filter files that actually need downloading
                 var filesToDownload = allFilesToDownload
-                    .Where(f => ShouldDownloadFile(f.localPath, f.file.Size, f.file.LastModified))
+                    .Where(f => ShouldDownloadFile(f.localPath, f.file.Size))
                     .ToList();
 
                 progress?.Report($"{filesToDownload.Count} files need to be downloaded, {allFilesToDownload.Count - filesToDownload.Count} files up-to-date");
 
                 cancellationToken.ThrowIfCancellationRequested();
+                
+                // Delete local files that don't exist on FTP (FTP is the source of truth)
+                await DeleteOrphanedFiles(cache, currentPath, destinationPath, progress, cancellationToken);
                 
                 // Download all files in parallel
                 var semaphore = new SemaphoreSlim(_maxConcurrentDownloads);
@@ -396,6 +402,119 @@ namespace Arma_3_LTRM.Services
             return items;
         }
 
+        private async Task DeleteOrphanedFiles(FtpDirectoryCache cache, string currentPath, string destinationPath, IProgress<string>? progress, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (!Directory.Exists(destinationPath))
+                    return;
+
+                // Build a set of all files that should exist based on FTP cache
+                var ftpFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var ftpDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                BuildExpectedFileSet(cache, currentPath, destinationPath, ftpFiles, ftpDirs);
+
+                // Scan local directory and delete files not in FTP
+                await ScanAndDeleteOrphanedFiles(destinationPath, ftpFiles, ftpDirs, progress, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                progress?.Report($"Error checking for orphaned files: {ex.Message}");
+            }
+        }
+
+        private void BuildExpectedFileSet(FtpDirectoryCache cache, string currentPath, string destinationPath, HashSet<string> ftpFiles, HashSet<string> ftpDirs)
+        {
+            if (!cache.Cache.TryGetValue(currentPath, out var items))
+                return;
+
+            var subdirectories = items.Where(i => i.IsDirectory && i.Name != "." && i.Name != "..").ToList();
+            var files = items.Where(i => !i.IsDirectory).ToList();
+
+            // Add files from current directory
+            foreach (var file in files)
+            {
+                var localPath = Path.Combine(destinationPath, file.Name);
+                ftpFiles.Add(localPath);
+            }
+
+            // Add subdirectories and recursively process them
+            foreach (var dir in subdirectories)
+            {
+                var localPath = Path.Combine(destinationPath, dir.Name);
+                ftpDirs.Add(localPath);
+                BuildExpectedFileSet(cache, dir.FullPath, localPath, ftpFiles, ftpDirs);
+            }
+        }
+
+        private async Task ScanAndDeleteOrphanedFiles(string localPath, HashSet<string> ftpFiles, HashSet<string> ftpDirs, IProgress<string>? progress, CancellationToken cancellationToken)
+        {
+            await Task.Run(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (!Directory.Exists(localPath))
+                    return;
+
+                // Delete orphaned files
+                var localFiles = Directory.GetFiles(localPath);
+                foreach (var file in localFiles)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    
+                    if (!ftpFiles.Contains(file))
+                    {
+                        try
+                        {
+                            File.Delete(file);
+                            Interlocked.Increment(ref _deletedFiles);
+                            progress?.Report($"Deleted (not in FTP): {Path.GetFileName(file)}");
+                        }
+                        catch (Exception ex)
+                        {
+                            progress?.Report($"Failed to delete {Path.GetFileName(file)}: {ex.Message}");
+                        }
+                    }
+                }
+
+                // Recursively process subdirectories
+                var localDirs = Directory.GetDirectories(localPath);
+                foreach (var dir in localDirs)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    ScanAndDeleteOrphanedFiles(dir, ftpFiles, ftpDirs, progress, cancellationToken).Wait();
+                }
+
+                // Delete empty directories that don't exist in FTP
+                foreach (var dir in localDirs)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    
+                    if (!ftpDirs.Contains(dir))
+                    {
+                        try
+                        {
+                            if (Directory.GetFiles(dir, "*", SearchOption.AllDirectories).Length == 0)
+                            {
+                                Directory.Delete(dir, true);
+                                progress?.Report($"Deleted directory (not in FTP): {Path.GetFileName(dir)}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            progress?.Report($"Failed to delete directory {Path.GetFileName(dir)}: {ex.Message}");
+                        }
+                    }
+                }
+            }, cancellationToken);
+        }
+
         private FtpItem? ParseMLSDLine(string line, string currentPath)
         {
             try
@@ -532,7 +651,7 @@ namespace Arma_3_LTRM.Services
                     }
                     else
                     {
-                        if (ShouldDownloadFile(localPath, item.Size, item.LastModified))
+                        if (ShouldDownloadFile(localPath, item.Size))
                         {
                             progress?.Report($"Downloading file: {item.Name} => {localPath} ({FormatFileSize(item.Size)})");
                             DownloadFileWithProgress(itemUri, username, password, localPath, item.Size, item.LastModified, progress, cancellationToken);
@@ -558,17 +677,15 @@ namespace Arma_3_LTRM.Services
             }
         }
 
-        private bool ShouldDownloadFile(string localPath, long remoteSize, DateTime remoteLastModified)
+        private bool ShouldDownloadFile(string localPath, long remoteSize)
         {
             if (!File.Exists(localPath))
                 return true;
 
             var localFileInfo = new FileInfo(localPath);
             
+            // Only check file size - ignore modified date
             if (localFileInfo.Length != remoteSize)
-                return true;
-
-            if (remoteLastModified != DateTime.MinValue && remoteLastModified > localFileInfo.LastWriteTime.AddSeconds(2))
                 return true;
 
             return false;
@@ -873,6 +990,7 @@ namespace Arma_3_LTRM.Services
                 {
                     _skippedFiles = 0;
                     _downloadedFiles = 0;
+                    _deletedFiles = 0;
 
                     cancellationToken.ThrowIfCancellationRequested();
                     
@@ -888,7 +1006,8 @@ namespace Arma_3_LTRM.Services
                     
                     await DownloadDirectoryFromCache(cache, remotePath, username, password, localPath, ftpUrl, port, progress, cancellationToken);
                     
-                    progress?.Report($"Folder download completed: {_downloadedFiles} files downloaded, {_skippedFiles} files up-to-date");
+                    var deletionMessage = _deletedFiles > 0 ? $", {_deletedFiles} files deleted" : "";
+                    progress?.Report($"Folder download completed: {_downloadedFiles} files downloaded, {_skippedFiles} files up-to-date{deletionMessage}");
                 }
                 catch (OperationCanceledException)
                 {

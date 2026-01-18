@@ -333,6 +333,38 @@ Background="#1E1E1E">
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,10"/>
                     </StackPanel>
+
+                    <!-- Launch Parameters Preview at bottom spanning all columns -->
+                    <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" 
+                            Background="#252526" 
+                            BorderBrush="#3F3F46" 
+                            BorderThickness="1" 
+                            CornerRadius="3"
+                            Padding="15"
+                            Margin="0,20,0,0">
+                        <StackPanel>
+                            <TextBlock Text="LAUNCH PARAMETERS PREVIEW" 
+                                       FontSize="14" 
+                                       FontWeight="Bold" 
+                                       Margin="0,0,0,5"/>
+                            <TextBlock Text="This is what will be passed to Arma 3 when launching:" 
+                                       Foreground="#999" 
+                                       FontSize="12" 
+                                       Margin="0,0,0,10"/>
+                            <TextBox x:Name="HomeFinalParametersTextBox" 
+                                     IsReadOnly="True"
+                                     TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     Background="#1E1E1E" 
+                                     Foreground="#4EC9B0" 
+                                     BorderBrush="#3F3F46"
+                                     Padding="10" 
+                                     FontSize="11" 
+                                     FontFamily="Consolas"
+                                     MinHeight="100"
+                                     MaxHeight="150"/>
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </TabItem>
 
