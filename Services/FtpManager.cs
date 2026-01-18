@@ -126,8 +126,8 @@ namespace Arma_3_LTRM.Services
             }
             catch (OperationCanceledException)
             {
+                progress?.Report("Download cancelled by user.");
                 semaphore.Release();
-                throw;
             }
             catch (Exception ex)
             {
@@ -843,8 +843,7 @@ namespace Arma_3_LTRM.Services
                 }
                 catch (OperationCanceledException)
                 {
-                    progress?.Report($"Download cancelled.");
-                    throw;
+                    progress?.Report("Download cancelled by user.");
                 }
                 catch (Exception ex)
                 {

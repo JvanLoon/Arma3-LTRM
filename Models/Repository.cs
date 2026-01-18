@@ -6,6 +6,7 @@ namespace Arma_3_LTRM.Models
     {
         private Guid _id;
         private bool _isEnabled = true;
+        private bool _isChecked = false;
         private string _name;
         private string _url;
         private int _port;
@@ -34,6 +35,19 @@ namespace Arma_3_LTRM.Models
                 {
                     _isEnabled = value;
                     OnPropertyChanged(nameof(IsEnabled));
+                }
+            }
+        }
+
+        public bool IsChecked
+        {
+            get => _isChecked;
+            set
+            {
+                if (_isChecked != value)
+                {
+                    _isChecked = value;
+                    OnPropertyChanged(nameof(IsChecked));
                 }
             }
         }

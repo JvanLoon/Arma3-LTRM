@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Arma_3_LTRM.Services
@@ -21,6 +21,11 @@ namespace Arma_3_LTRM.Services
             _parameters["noLogs"] = false;
             _parameters["showScriptErrors"] = false;
             _parameters["filePatching"] = false;
+        } 
+
+        public Dictionary<string, bool> GetPredefinedParameters()
+        {
+            return new Dictionary<string, bool>(_parameters);
         }
 
         public void SetParameter(string parameterName, bool enabled)
@@ -29,7 +34,7 @@ namespace Arma_3_LTRM.Services
             {
                 _parameters[parameterName] = enabled;
                 OnParametersChanged();
-            }
+            } 
         }
 
         public void UpdateModsList(List<string> modPaths)
@@ -39,7 +44,7 @@ namespace Arma_3_LTRM.Services
             OnParametersChanged();
         }
 
-        public List<string> GetParametersList()
+        public string GetParametersString(string customParameters = "")
         {
             var parameters = new List<string>();
 
@@ -48,17 +53,32 @@ namespace Arma_3_LTRM.Services
                 parameters.Add($"-{param.Key}");
             }
 
+            if (!string.IsNullOrWhiteSpace(customParameters))
+            {
+                var lines = customParameters.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    var trimmed = line.Trim();
+                    if (!string.IsNullOrWhiteSpace(trimmed))
+                    {
+                        if (!trimmed.StartsWith("-"))
+                        {
+                            parameters.Add($"-{trimmed}");
+                        }
+                        else
+                        {
+                            parameters.Add(trimmed);
+                        }
+                    }
+                }
+            }
+
             foreach (var modPath in _modPaths)
             {
                 parameters.Add($"-mod={modPath}");
             }
 
-            return parameters;
-        }
-
-        public string GetParametersString()
-        {
-            return string.Join(" ", GetParametersList());
+            return string.Join(Environment.NewLine, parameters);
         }
 
         private void OnParametersChanged()

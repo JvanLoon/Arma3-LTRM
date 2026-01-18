@@ -202,16 +202,21 @@ Background="#1E1E1E">
                         <TextBlock Text="REPOSITORIES" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
                         
                         <ListBox x:Name="RepositoriesListBox" Height="400" Margin="0,0,0,15"
-                                 SelectionMode="Extended">
+                                 SelectionMode="Single">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="5">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="??" FontSize="20" Margin="0,0,10,0"/>
-                                        <StackPanel Grid.Column="1">
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked}" 
+                                                  VerticalAlignment="Center" Margin="0,0,10,0"
+                                                  Checked="RepositoryCheckBox_Changed" 
+                                                  Unchecked="RepositoryCheckBox_Changed"/>
+                                        <TextBlock Grid.Column="1" Text="??" FontSize="20" Margin="0,0,10,0"/>
+                                        <StackPanel Grid.Column="2">
                                             <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
                                             <TextBlock Text="{Binding Url}" Foreground="#999" FontSize="12"/>
                                         </StackPanel>
@@ -234,16 +239,21 @@ Background="#1E1E1E">
                         <TextBlock Text="EVENTS" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
                         
                         <ListBox x:Name="EventsListBox" Height="400" Margin="0,0,0,15"
-                                 SelectionMode="Extended">
+                                 SelectionMode="Single">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="5">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="??" FontSize="20" Margin="0,0,10,0"/>
-                                        <StackPanel Grid.Column="1">
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked}" 
+                                                  VerticalAlignment="Center" Margin="0,0,10,0"
+                                                  Checked="EventCheckBox_Changed" 
+                                                  Unchecked="EventCheckBox_Changed"/>
+                                        <TextBlock Grid.Column="1" Text="??" FontSize="20" Margin="0,0,10,0"/>
+                                        <StackPanel Grid.Column="2">
                                             <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"/>
                                             <TextBlock Foreground="#999" FontSize="12">
                                                 <Run Text="{Binding ModFolders.Count, Mode=OneWay}"/>
@@ -336,6 +346,70 @@ Background="#1E1E1E">
                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
                         <Button Style="{StaticResource ActionButton}" Content="Add Event" Click="AddEvent_Click" Width="150"/>
                     </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Parameters">
+                <Grid Background="#1E1E1E" Margin="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left side: Predefined Parameters -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="PREDEFINED PARAMETERS" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                        <TextBlock Text="Select the parameters you want to use when launching Arma 3:" 
+                                   Foreground="#999" FontSize="12" Margin="0,0,0,10"/>
+                        
+                        <StackPanel x:Name="PredefinedParametersPanel" Margin="0,0,0,20"/>
+                    </StackPanel>
+
+                    <!-- Right side: Custom Parameters and Preview -->
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="CUSTOM PARAMETERS" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                        <TextBlock Grid.Row="1" Text="Enter additional parameters (one per line):" 
+                                   Foreground="#999" FontSize="12" Margin="0,0,0,10"/>
+                        
+                        <TextBox Grid.Row="2" x:Name="CustomParametersTextBox" 
+                                 Height="200" 
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto"
+                                 Background="#2D2D30" 
+                                 Foreground="#E0E0E0" 
+                                 BorderBrush="#3F3F46" 
+                                 Padding="8" 
+                                 FontSize="14"
+                                 FontFamily="Consolas"
+                                 Margin="0,0,0,20"
+                                 TextChanged="CustomParametersTextBox_TextChanged"/>
+                        
+                        <TextBlock Grid.Row="3" Text="FINAL COMMAND PREVIEW" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                        <TextBlock Grid.Row="4" Text="This is what will be passed to Arma 3:" 
+                                   Foreground="#999" FontSize="12" Margin="0,0,0,10"/>
+                        
+                        <TextBox Grid.Row="5" x:Name="FinalParametersTextBox" 
+                                 IsReadOnly="True"
+                                 TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto"
+                                 Background="#2D2D30" 
+                                 Foreground="#4EC9B0" 
+                                 BorderBrush="#3F3F46"
+                                 Padding="10" 
+                                 FontSize="12" 
+                                 FontFamily="Consolas"/>
+                    </Grid>
                 </Grid>
             </TabItem>
 

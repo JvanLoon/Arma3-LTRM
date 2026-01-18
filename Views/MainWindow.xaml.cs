@@ -18,6 +18,7 @@ namespace Arma_3_LTRM.Views
         private readonly EventManager _eventManager;
         private readonly SettingsManager _settingsManager;
         private readonly FtpManager _ftpManager;
+        private readonly LaunchParametersManager _launchParametersManager;
         private ObservableCollection<string> _downloadLocations;
 
         public MainWindow()
@@ -29,9 +30,11 @@ namespace Arma_3_LTRM.Views
             _eventManager.Initialize(_repositoryManager);
             _settingsManager = new SettingsManager();
             _ftpManager = new FtpManager();
+            _launchParametersManager = new LaunchParametersManager();
             _downloadLocations = new ObservableCollection<string>();
 
             LoadData();
+            InitializeParametersUI();
         }
 
         private void LoadData()
@@ -59,6 +62,161 @@ namespace Arma_3_LTRM.Views
             }
             
             SettingsDownloadLocationsListBox.ItemsSource = _downloadLocations;
+        }
+
+        private void InitializeParametersUI()
+        {
+            // Create checkboxes for predefined parameters
+            var predefinedParams = _launchParametersManager.GetPredefinedParameters();
+            var paramDescriptions = new Dictionary<string, string>
+            {
+                { "windowed", "Windowed - Run in windowed mode" },
+                { "world", "World - Show empty world" },
+                { "skipIntro", "Skip Intro - Skip intro videos" },
+                { "nosplash", "No Splash - Skip splash screens" },
+                { "noPause", "No Pause - Don't pause when window loses focus" },
+                { "noPauseAudio", "No Pause Audio - Don't pause audio when window loses focus" },
+                { "noLogs", "No Logs - Don't create RPT log files" },
+                { "showScriptErrors", "Show Script Errors - Show script errors" },
+                { "filePatching", "File Patching - Enable file patching" }
+            };
+
+            PredefinedParametersPanel.Children.Clear();
+            foreach (var param in predefinedParams.OrderBy(p => p.Key))
+            {
+                var checkBox = new System.Windows.Controls.CheckBox
+                {
+                    Content = paramDescriptions.ContainsKey(param.Key) ? paramDescriptions[param.Key] : param.Key,
+                    IsChecked = param.Value,
+                    Tag = param.Key,
+                    Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE0, 0xE0, 0xE0)),
+                    FontSize = 14,
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+                checkBox.Checked += ParameterCheckBox_Changed;
+                checkBox.Unchecked += ParameterCheckBox_Changed;
+                PredefinedParametersPanel.Children.Add(checkBox);
+            }
+
+            UpdateParametersDisplay();
+        }
+
+        private void ParameterCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.CheckBox checkBox && checkBox.Tag is string paramName)
+            {
+                _launchParametersManager.SetParameter(paramName, checkBox.IsChecked == true);
+                UpdateParametersDisplay();
+            }
+        }
+
+        private void CustomParametersTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            UpdateParametersDisplay();
+        }
+
+        private void RepositoryCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.CheckBox checkBox && checkBox.IsChecked == true)
+            {
+                // Uncheck all events when a repository is checked
+                foreach (var evt in _eventManager.Events)
+                {
+                    evt.IsChecked = false;
+                }
+            }
+            
+            UpdateParametersDisplay();
+        }
+
+        private void EventCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.CheckBox checkBox && checkBox.IsChecked == true)
+            {
+                // Uncheck all repositories when an event is checked
+                foreach (var repo in _repositoryManager.Repositories)
+                {
+                    repo.IsChecked = false;
+                }
+            }
+            
+            UpdateParametersDisplay();
+        }
+
+        private void UpdateParametersDisplay()
+        {
+            // Get mod folders from checked repositories and events
+            var modFolders = new List<string>();
+
+            var checkedRepos = _repositoryManager.Repositories.Where(r => r.IsChecked).ToList();
+            var checkedEvents = _eventManager.Events.Where(e => e.IsChecked).ToList();
+
+            // If repositories are checked, find their mod folders in download locations
+            foreach (var repo in checkedRepos)
+            {
+                var repoPath = FindRepositoryInLocations(repo.Name);
+                if (repoPath != null && Directory.Exists(repoPath))
+                {
+                    var directories = Directory.GetDirectories(repoPath, "*", SearchOption.AllDirectories);
+                    foreach (var dir in directories)
+                    {
+                        if (Path.GetFileName(dir).StartsWith("@"))
+                        {
+                            modFolders.Add(dir);
+                        }
+                    }
+                }
+            }
+
+            // If events are checked, get their mod folder paths
+            foreach (var evt in checkedEvents)
+            {
+                var eventPath = FindEventInLocations(evt);
+                if (eventPath != null)
+                {
+                    var arma3Dir = Path.GetDirectoryName(_settingsManager.Settings.Arma3ExePath);
+                    
+                    foreach (var modFolder in evt.ModFolders)
+                    {
+                        if (modFolder.ItemType == ModItemType.DLC && !string.IsNullOrEmpty(arma3Dir))
+                        {
+                            var dlcPath = Path.Combine(arma3Dir, modFolder.FolderPath);
+                            if (Directory.Exists(dlcPath))
+                            {
+                                modFolders.Add(dlcPath);
+                            }
+                        }
+                        else if (modFolder.ItemType == ModItemType.Workshop && !string.IsNullOrEmpty(arma3Dir))
+                        {
+                            var workshopPath = Path.Combine(arma3Dir, "!Workshop", modFolder.FolderPath);
+                            if (Directory.Exists(workshopPath))
+                            {
+                                modFolders.Add(workshopPath);
+                            }
+                        }
+                        else
+                        {
+                            var relativePath = modFolder.FolderPath.TrimStart('/');
+                            var localPath = Path.Combine(eventPath, relativePath);
+                            if (Directory.Exists(localPath))
+                            {
+                                modFolders.Add(localPath);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Update mod paths in LaunchParametersManager
+            _launchParametersManager.UpdateModsList(modFolders);
+
+            // Get custom parameters and generate final command
+            var customParams = CustomParametersTextBox.Text;
+            var finalParams = _launchParametersManager.GetParametersString(customParams);
+            
+            FinalParametersTextBox.Text = string.IsNullOrWhiteSpace(finalParams) 
+                ? "(No parameters selected)" 
+                : finalParams;
         }
 
         private void SettingsBrowseArma3_Click(object sender, RoutedEventArgs e)
@@ -401,6 +559,7 @@ namespace Arma_3_LTRM.Views
                 catch (OperationCanceledException)
                 {
                     progressWindow.Close();
+                    ((IProgress<string>)progress).Report("Download cancelled by user.");
                     return;
                 }
             }
@@ -411,10 +570,10 @@ namespace Arma_3_LTRM.Views
 
         private void LaunchEvent_Click(object sender, RoutedEventArgs e)
         {
-            var selectedEvents = EventsListBox.SelectedItems.Cast<Event>().ToList();
-            if (selectedEvents.Count == 0)
+            var checkedEvents = _eventManager.Events.Where(e => e.IsChecked).ToList();
+            if (checkedEvents.Count == 0)
             {
-                MessageBox.Show("Please select at least one event.", "No Selection", 
+                MessageBox.Show("Please check at least one event.", "No Selection", 
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -422,7 +581,7 @@ namespace Arma_3_LTRM.Views
             if (!ValidateArma3Path())
                 return;
 
-            foreach (var evt in selectedEvents)
+            foreach (var evt in checkedEvents)
             {
                 var foundPath = FindEventInLocations(evt);
                 if (foundPath == null)
@@ -659,8 +818,9 @@ namespace Arma_3_LTRM.Views
                     return;
                 }
 
-                var modParams = string.Join(";", modFolders);
-                var arguments = $"-mod={modParams}";
+                _launchParametersManager.UpdateModsList(modFolders);
+                var customParams = CustomParametersTextBox.Text;
+                var arguments = _launchParametersManager.GetParametersString(customParams).Replace(Environment.NewLine, " ");
 
                 var processInfo = new ProcessStartInfo
                 {

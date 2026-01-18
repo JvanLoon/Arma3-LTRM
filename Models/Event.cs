@@ -6,6 +6,7 @@ namespace Arma_3_LTRM.Models
     public class Event : INotifyPropertyChanged
     {
         private string _name;
+        private bool _isChecked = false;
         private ObservableCollection<Repository> _repositories;
         private ObservableCollection<ModFolder> _modFolders;
 
@@ -18,6 +19,19 @@ namespace Arma_3_LTRM.Models
                 {
                     _name = value;
                     OnPropertyChanged(nameof(Name));
+                }
+            }
+        }
+
+        public bool IsChecked
+        {
+            get => _isChecked;
+            set
+            {
+                if (_isChecked != value)
+                {
+                    _isChecked = value;
+                    OnPropertyChanged(nameof(IsChecked));
                 }
             }
         }
