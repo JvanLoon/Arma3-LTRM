@@ -255,10 +255,14 @@ namespace Arma_3_LTRM.Views
                         }
                         
                         nodes.Add(node);
-                        FtpTreeView.Items.Add(node);
                     }
 
                     _repositoryCache[repository.Id] = nodes;
+
+                    foreach (var node in nodes)
+                    {
+                        FtpTreeView.Items.Add(node);
+                    }
 
                     var modFolderCount = nodes.Count(n => n.IsSelectable);
                     BrowseStatusText.Text = $"Found {modFolderCount} mod folder(s) - only @ folders can be checked";
