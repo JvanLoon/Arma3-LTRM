@@ -6,36 +6,28 @@ A modern Windows desktop application for managing and synchronizing Arma 3 mod r
 
 Arma 3 LTRM provides a user-friendly interface to:
 - Connect to multiple FTP repositories hosting Arma 3 mods
+- Create custom event configurations with specific mod selections
 - Intelligently sync mod files (downloads only new/changed files)
-- Manage addon groups and startup parameters
-- Launch Arma 3 with custom configurations
+- Browse FTP servers with an interactive tree view
+- Launch Arma 3 with automatically configured mods
 
 ## Features
 
 ### Repository Management
 - **Multiple Repository Support**: Add and manage multiple FTP servers
 - **Intelligent Syncing**: Only downloads new or modified files based on size and timestamp comparison
+- **Multi-threaded Downloads**: Up to 8 concurrent file downloads for faster synchronization
+- **Directory Caching**: Pre-scan entire repository structure for optimized downloads
 - **Progress Tracking**: Real-time download progress with detailed logging
 - **Connection Testing**: Verify repository connectivity before syncing
+- **MLSD Support**: Modern FTP listing with automatic fallback to legacy modes
 
-### Mod Management
-- **Folder Organization**: Add multiple mod directories to your collection
-- **Addon Browser**: Visual tree view of available addons in your mod folders
-- **Drag & Drop**: Easy mod activation via drag-and-drop interface
-- **Startup Groups**: Create and manage groups of mods to load on game launch
-
-### Launch Parameters
-- **Predefined Options**: Quick toggles for common Arma 3 launch parameters:
-  - Windowed mode
-  - Empty world
-  - Skip intro
-  - No splash screens
-  - No pause on focus loss
-  - File patching (for mission development)
-  - Script error display
-  - And more...
-- **Custom Parameters**: Add additional command-line arguments
-- **Real-time Preview**: See generated launch parameters before starting the game
+### Event Management
+- **Custom Event Creation**: Define collections of mods from one or more repositories
+- **FTP Browser**: Interactive tree view to browse and select folders from repositories
+- **Multi-Repository Events**: Combine mod folders from different FTP servers in a single event
+- **Selective Downloads**: Download only the folders you need for specific events
+- **Event Persistence**: Events saved as JSON files for easy management and sharing
 
 ## Technologies Used
 
@@ -50,31 +42,38 @@ Arma 3 LTRM provides a user-friendly interface to:
 - **IProgress<T>**: Real-time progress reporting for long-running operations
 - **INotifyPropertyChanged**: Data binding for reactive UI updates
 - **ObservableCollection**: Automatic UI synchronization for collection changes
+- **Parallel Processing**: ConcurrentQueue and ConcurrentBag for thread-safe operations
+- **Semaphore-based Throttling**: SemaphoreSlim for download concurrency control
 
 ### Key Technologies
 - **FTP Protocol**: Legacy `FtpWebRequest` for maximum compatibility
-  - List directory and directory details parsing
+  - MLSD support for modern FTP servers (structured listing)
+  - LIST and LIST -al fallback for legacy servers
   - File size and timestamp retrieval
-  - Binary file transfer
-- **JSON Serialization**: Repository configuration persistence (`System.Text.Json`)
+  - Binary file transfer with 64KB buffer
+  - Directory caching for optimized scanning
+- **JSON Serialization**: Configuration persistence (`System.Text.Json`)
 - **File I/O**: Efficient file operations with buffered streams
-- **Drag & Drop**: Native Windows drag-and-drop for intuitive UX
+- **Multi-threading**: Up to 8 concurrent downloads with semaphore limiting
 
 ### Project Structure
 ```
 Arma 3 LTRM/
 ??? Models/
 ?   ??? Repository.cs          - Data model for FTP repository configuration
+?   ??? Event.cs               - Event and ModFolder data models
+?   ??? AppSettings.cs         - Application settings model
 ??? Services/
-?   ??? FtpManager.cs          - FTP operations and file synchronization
-?   ??? ModManager.cs          - Mod folder and addon management
+?   ??? FtpManager.cs          - FTP operations, file synchronization, and browsing
 ?   ??? RepositoryManager.cs   - Repository persistence and CRUD
-?   ??? LaunchParametersManager.cs - Game launch parameter generation
+?   ??? EventManager.cs        - Event persistence and CRUD
+?   ??? SettingsManager.cs     - Application settings management
 ??? Views/
-?   ??? MainWindow.xaml(.cs)   - Primary application window
+?   ??? MainWindow.xaml(.cs)   - Primary tabbed interface (Home, Manage Repos, Events, Settings)
 ?   ??? AddRepositoryWindow.xaml(.cs) - Repository add/edit dialog
-?   ??? ModListSelectionWindow.xaml(.cs) - Mod folder selection
-?   ??? DownloadProgressWindow.xaml(.cs) - Download progress display
+?   ??? AddEditEventWindow.xaml(.cs) - Event creation with FTP browsing
+?   ??? SettingsWindow.xaml(.cs) - Settings configuration dialog
+?   ??? SimpleProgressWindow.xaml(.cs) - Download progress display
 ??? App.xaml(.cs)              - Application entry point
 ??? AssemblyInfo.cs            - Assembly metadata
 ```
@@ -83,26 +82,31 @@ Arma 3 LTRM/
 
 ### FTP Synchronization Algorithm
 1. **Connect**: Establish FTP connection using provided credentials
-2. **List**: Retrieve directory listing (tries `LIST` then falls back to `LIST -l`)
-3. **Parse**: Extract file metadata (name, size, timestamp, directory flag)
-4. **Compare**: Check local files against remote:
+2. **Cache Build**: Recursively scan entire repository structure upfront (up to 8 concurrent operations)
+3. **List**: Retrieve directory listing using best available method:
+   - Try MLSD (modern structured listing) first
+   - Fall back to LIST -al (detailed listing)
+   - Fall back to LIST with parallel size checks if needed
+4. **Parse**: Extract file metadata (name, size, timestamp, directory flag)
+5. **Compare**: Check local files against remote:
    - If file doesn't exist locally ? download
    - If sizes differ ? download
    - If remote is newer (with 2-second tolerance for FTP precision) ? download
    - Otherwise ? skip (already up-to-date)
-5. **Download**: Stream files in 8KB chunks with progress reporting
-6. **Timestamp Sync**: Set local file timestamps to match remote files
-7. **Recurse**: Process subdirectories recursively
+6. **Download**: Stream files in 64KB chunks with up to 8 concurrent downloads
+7. **Timestamp Sync**: Set local file timestamps to match remote files
+8. **Recurse**: Process subdirectories from cache
 
 ### Launch Process
-1. User enables repositories and selects download location
-2. Application syncs all enabled repositories sequentially
-3. After successful sync (or user confirmation if partial failure)
-4. Application builds command-line arguments from:
-   - Selected launch options (checkboxes)
-   - Activated mod paths (from startup groups)
-   - Custom parameters (text input)
-5. Launches `arma3.exe` with generated parameters
+1. User selects repositories or events from Home tab
+2. Choose action: Download, Launch, or Download & Launch
+3. For downloads:
+   - Repositories: Download entire FTP structure to `Downloads/Repositories/{RepoName}/`
+   - Events: Download specific folders from multiple repositories maintaining full path structure
+4. For launch:
+   - Recursively scan download paths for folders starting with `@`
+   - Build `-mod=` parameter with all found mod folders
+5. Launches `arma3_x64.exe` or `arma3.exe` with generated mod parameters
 
 ## Installation
 
@@ -120,7 +124,7 @@ Arma 3 LTRM/
 ## Usage
 
 ### Adding a Repository
-1. Navigate to the **Repositories** tab
+1. Navigate to the **Manage Repositories** tab
 2. Click **Add Repository**
 3. Enter repository details:
    - Name (e.g., "Lowlands Tactical Mods")
@@ -128,22 +132,29 @@ Arma 3 LTRM/
    - Port (default: 21)
    - Username and Password
 4. Click **OK**
-5. Enable the repository checkbox to include it in syncs
+5. Optionally test the connection using **Test Connection** button
 
-### Managing Mods
-1. Go to the **Addons** tab
-2. Click **+** to add mod folders from your system
-3. Browse available addons in the left tree view
-4. Drag addons to the **Addon Groups** on the right to activate them
-5. Check/uncheck addons in groups to control which load on launch
+### Creating Events
+1. Go to the **Manage Events** tab
+2. Click **Add Event**
+3. Enter an event name
+4. Select a repository from the dropdown
+5. Click **Browse Repository Folders** to explore the FTP server
+6. Check folders you want to include (only @ folders are selectable)
+7. Click **Add Selected** to add folders to the event
+8. Repeat steps 4-7 to add folders from other repositories
+9. Click **Save** to create the event
 
 ### Launching Arma 3
-1. Configure your desired **Launcher Options**
-2. Review **Run Parameters** preview
-3. Click **Launch**
-4. If repositories are enabled, select a sync destination
-5. Wait for sync to complete
-6. Arma 3 launches automatically with your configuration
+1. Go to the **Home** tab
+2. For repositories:
+   - Select one or more repositories from the list
+   - Click **Download & Launch** (or **Download** only, or **Launch** with existing files)
+3. For events:
+   - Select one or more events from the list
+   - Click **Download & Launch** (or **Download** only, or **Launch** with existing files)
+4. Wait for download to complete (if applicable)
+5. Arma 3 launches automatically with all @ folders found in the download path(s)
 
 ## Configuration Files
 
@@ -152,7 +163,7 @@ Stored in the application directory, contains:
 ```json
 [
   {
-    "IsEnabled": true,
+    "Id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "Name": "Example Repository",
     "Url": "ftp.example.com",
     "Port": 21,
@@ -162,12 +173,51 @@ Stored in the application directory, contains:
 ]
 ```
 
+### settings.json
+Stored in the application directory, contains:
+```json
+{
+  "Arma3ExePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Arma 3\\arma3_x64.exe",
+  "BaseDownloadLocation": "C:\\Users\\YourName\\Documents\\Arma3-LTRM\\Downloads",
+  "HiddenRepositories": [],
+  "HiddenEvents": []
+}
+```
+
+### Settings/Events/{EventName}.json
+One file per event in the Settings/Events directory:
+```json
+{
+  "Name": "Weekly Ops",
+  "Repositories": [
+    {
+      "Id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "Name": "Main Repo",
+      "Url": "ftp.example.com",
+      "Port": 21,
+      "Username": "user",
+      "Password": "pass"
+    }
+  ],
+  "ModFolders": [
+    {
+      "RepositoryId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "FolderPath": "/@ace"
+    },
+    {
+      "RepositoryId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "FolderPath": "/@CBA_A3"
+    }
+  ]
+}
+```
+
 ## Known Limitations
 - FTP only (no SFTP/FTPS support currently)
-- Passwords stored in plain text in `repositories.json`
+- Passwords stored in plain text in configuration files
 - Windows-only (WPF framework limitation)
-- No automatic update checking
-- Single-threaded FTP downloads (sequential file processing)
+- No automatic update checking for the application itself
+- Download paths maintain full FTP structure (event folders are not isolated in separate subdirectories)
 
 ## Contributing
 Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
