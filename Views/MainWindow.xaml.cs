@@ -1166,7 +1166,7 @@ namespace Arma_3_LTRM.Views
                         var dlcPath = Path.Combine(arma3Dir, modFolder.FolderPath);
                         if (Directory.Exists(dlcPath))
                         {
-                            modFolders.Add(dlcPath);
+                            modFolders.Add(modFolder.FolderPath);
                         }
                     }
                     else if (modFolder.ItemType == ModItemType.Workshop)
@@ -1197,8 +1197,9 @@ namespace Arma_3_LTRM.Views
                     return;
                 }
 
-                var modParams = string.Join(";", modFolders);
-                var arguments = $"-mod={modParams}";
+                _launchParametersManager.UpdateModsList(modFolders);
+                var customParams = CustomParametersTextBox.Text;
+                var arguments = _launchParametersManager.GetParametersString(customParams).Replace(Environment.NewLine, " ");
 
                 // Add server connection parameters if a server is selected
                 var checkedServer = _serverManager.Servers.FirstOrDefault(s => s.IsChecked);
