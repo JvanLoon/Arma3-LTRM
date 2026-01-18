@@ -54,18 +54,20 @@ namespace Arma_3_LTRM.Views
             LoadDlcItems();
             LoadWorkshopItems();
 
+            // Start preloading all repositories in background
+            // Set _isPreloading before setting SelectedIndex to prevent race condition
+            _isPreloading = true;
+            PreloadAllRepositories();
+
             if (_repositoryManager.Repositories.Count > 0)
             {
                 RepositoryComboBox.SelectedIndex = 0;
             }
-
-            // Start preloading all repositories in background
-            PreloadAllRepositories();
         }
 
         private async void PreloadAllRepositories()
         {
-            _isPreloading = true;
+            // _isPreloading is already set to true in the constructor before this is called
             
             foreach (var repository in _repositoryManager.Repositories)
             {
