@@ -113,8 +113,9 @@ namespace Arma_3_LTRM.Views
 
             _isPreloading = false;
 
-            // Refresh the current view if a repository is selected
-            if (RepositoryComboBox.SelectedItem is Repository selectedRepo)
+            // Refresh the current view if a repository is selected and TreeView is empty
+            // This prevents duplicate loading if SelectionChanged already loaded it
+            if (RepositoryComboBox.SelectedItem is Repository selectedRepo && FtpTreeView.Items.Count == 0)
             {
                 LoadCachedRepository(selectedRepo);
             }
