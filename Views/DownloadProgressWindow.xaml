@@ -56,15 +56,46 @@ mc:Ignorable="d"
     
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
+        <!-- Status Panel -->
+        <Border Grid.Row="0" Background="#252526" BorderBrush="#3F3F46" BorderThickness="1" 
+                CornerRadius="5" Padding="15" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Downloaded Files -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                    <TextBlock Text="Downloaded: " FontWeight="SemiBold" Foreground="#4EC9B0"/>
+                    <TextBlock x:Name="DownloadedCountText" Text="0" FontWeight="Bold" Foreground="#4EC9B0"/>
+                </StackPanel>
+                
+                <!-- Skipped Files -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="Up-to-date: " FontWeight="SemiBold" Foreground="#DCDCAA"/>
+                    <TextBlock x:Name="SkippedCountText" Text="0" FontWeight="Bold" Foreground="#DCDCAA"/>
+                </StackPanel>
+                
+                <!-- Deleted Files -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock Text="Deleted: " FontWeight="SemiBold" Foreground="#F48771"/>
+                    <TextBlock x:Name="DeletedCountText" Text="0" FontWeight="Bold" Foreground="#F48771"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
             <TextBlock x:Name="ProgressTextBlock" TextWrapping="Wrap"/>
         </ScrollViewer>
         
-        <Button x:Name="CancelButton" Grid.Row="1" Content="Cancel Download" 
+        <Button x:Name="CancelButton" Grid.Row="2" Content="Cancel Download" 
                 Width="150" HorizontalAlignment="Right" Click="CancelButton_Click"/>
     </Grid>
 </Window>
