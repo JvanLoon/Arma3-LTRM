@@ -63,11 +63,13 @@ Arma 3 LTRM/
 │   ├── Repository.cs          - Data model for FTP repository configuration
 │   ├── Event.cs               - Event and ModFolder data models
 │   ├── AppSettings.cs         - Application settings model
+│   ├── LaunchParameters.cs    - Arma 3 launch parameters configuration
 │   Services/
 │   ├── FtpManager.cs          - FTP operations, file synchronization, and browsing
 │   ├── RepositoryManager.cs   - Repository persistence and CRUD
 │   ├── EventManager.cs        - Event persistence and CRUD
 │   ├── SettingsManager.cs     - Application settings management
+│   ├── LaunchParametersManager.cs - Launch parameter configuration and generation
 │   Views/
 │   ├── MainWindow.xaml(.cs)   - Primary tabbed interface (Home, Manage Repos, Events, Settings)
 │   ├── AddRepositoryWindow.xaml(.cs) - Repository add/edit dialog
@@ -99,14 +101,24 @@ Arma 3 LTRM/
 
 ### Launch Process
 1. User selects repositories or events from Home tab
-2. Choose action: Download, Launch, or Download & Launch
-3. For downloads:
+2. Configure launch parameters (optional):
+   - Profile settings (custom profile path, unit name)
+   - Mission selection
+   - Display options (windowed mode)
+   - Game loading optimizations (no splash, skip intro, etc.)
+   - Developer/debug options
+   - Server configuration paths
+   - Custom command-line parameters
+3. Choose action: Download, Launch, or Download & Launch
+4. For downloads:
    - Repositories: Download entire FTP structure to `Downloads/Repositories/{RepoName}/`
    - Events: Download specific folders from multiple repositories maintaining full path structure
-4. For launch:
+5. For launch:
    - Recursively scan download paths for folders starting with `@`
    - Build `-mod=` parameter with all found mod folders
-5. Launches `arma3_x64.exe` or `arma3.exe` with generated mod parameters
+   - Apply all configured launch parameters
+   - Generate complete command-line argument string
+6. Launches `arma3_x64.exe` or `arma3.exe` with generated mod and launch parameters
 
 ## Installation
 
@@ -155,6 +167,43 @@ Arma 3 LTRM/
    - Click **Download & Launch** (or **Download** only, or **Launch** with existing files)
 4. Wait for download to complete (if applicable)
 5. Arma 3 launches automatically with all @ folders found in the download path(s)
+
+### Configuring Launch Parameters
+The application supports extensive Arma 3 launch parameter configuration:
+
+**Profile Options:**
+- Profile Path: Specify custom profile directory
+- Unit: Set custom unit name
+
+**Mission:**
+- Load Mission: Launch directly into a specific mission file
+
+**Display Options:**
+- Windowed Mode: Run in borderless window mode
+
+**Game Loading Speedup:**
+- No Splash: Skip splash screens
+- Skip Intro: Skip intro videos
+- Empty World: Start with empty world for faster loading
+- Enable HT: Enable hyper-threading
+
+**Developer & Debug Options:**
+- Show Script Errors: Display script error messages
+- No Pause: Disable pause when window loses focus
+- No Pause Audio: Continue audio when window loses focus
+- No Logs: Disable log file creation
+- No Freeze Check: Disable freeze detection
+- No File Patching: Disable file patching for better performance
+- Debug: Enable debug mode
+
+**Server Options:**
+- Config Path: Custom server config file location
+- BattlEye Path: Custom BattlEye directory
+
+**Custom Parameters:**
+- Add any additional command-line parameters as needed
+
+All configured parameters are automatically applied when launching Arma 3 with your selected mods.
 
 ## Configuration Files
 

@@ -48,10 +48,12 @@ Done!
 ### Models
 - `Models/Event.cs` - Event and ModFolder data models
 - `Models/AppSettings.cs` - Application settings model
+- `Models/LaunchParameters.cs` - Comprehensive launch parameter model with INotifyPropertyChanged
 
 ### Services
 - `Services/EventManager.cs` - Event CRUD and JSON persistence
 - `Services/SettingsManager.cs` - Settings management
+- `Services/LaunchParametersManager.cs` - Launch parameter configuration, mod path management, and command-line generation
 
 ### Views
 - `Views/MainWindow.xaml` - Completely redesigned main interface
@@ -85,13 +87,23 @@ Done!
 
 ## Removed Features
 
-1. **Addon Browser** - Tree view of available addons
-2. **Drag & Drop** - Manual addon activation
-3. **Startup Groups** - Custom addon groups
-4. **Mod Folders Management** - Manual folder adding
-5. **Launcher Options** - Individual launch parameter toggles
-6. **Custom Parameters** - Additional command-line arguments
-7. **Repository Enable/Disable** - Now selection-based
+1. **Addon Browser** - Tree view of available addons (replaced by event-based FTP browsing)
+2. **Drag & Drop** - Manual addon activation (replaced by event selection)
+3. **Startup Groups** - Custom addon groups (replaced by events)
+4. **Mod Folders Management** - Manual folder adding (replaced by FTP browser)
+5. **Repository Enable/Disable** - Now selection-based
+
+## Re-added Features (Post v2.0)
+
+1. **Launch Parameters** - Comprehensive Arma 3 launch configuration
+   - Profile options (profile path, unit name)
+   - Mission loading
+   - Display options (windowed mode)
+   - Game loading speedup (no splash, skip intro, empty world, enable HT)
+   - Developer/debug options (script errors, pause behavior, logs, freeze check, file patching, debug mode)
+   - Server options (config path, BattlEye path)
+   - Custom parameters support
+   - All parameters accessible and configurable through UI
 
 ## File Structure Changes
 
@@ -174,9 +186,10 @@ Done!
 3. **Different File Locations**: Downloads organized by Repositories/Events
 
 ### For Developers
-1. **Removed Classes**: ModManager, LaunchParametersManager
+1. **Removed Classes**: ModManager (temporarily), LaunchParametersManager (re-added with new implementation)
 2. **Changed Signatures**: FtpManager methods now async
 3. **New Dependencies**: Event and Settings models
+4. **Re-added**: LaunchParameters model and LaunchParametersManager service with enhanced functionality
 
 ## Migration Path (Manual)
 
@@ -197,7 +210,30 @@ Potential improvements identified during redesign:
 4. **Auto-Updates** - Check for new event versions
 5. **Visibility Filters** - Hide/show specific repos/events (UI ready)
 6. **Import/Export** - Bulk event management
-7. **Launch Parameters** - Per-event custom Arma 3 parameters
+7. ~~**Launch Parameters** - Per-event custom Arma 3 parameters~~ ? **COMPLETED**
+
+## Recent Updates
+
+### Launch Parameters (Re-implemented)
+The comprehensive launch parameters system has been re-added to v2.0+ with the following components:
+
+**Models/LaunchParameters.cs:**
+- Profile configuration (custom profile path, unit name)
+- Mission loading options
+- Display settings (windowed mode with no border)
+- Game loading speedup options (nosplash, skipIntro, empty world, enableHT)
+- Developer options (showScriptErrors, noPause, noPauseAudio, noLogs, noFreezeCheck, noFilePatching, debug)
+- Server configuration (config path, BattlEye path)
+- Implements INotifyPropertyChanged for data binding
+
+**Services/LaunchParametersManager.cs:**
+- Profile discovery (scans Documents/Arma 3 and Documents/Arma 3 - Other Profiles)
+- Mod path management with update notifications
+- Parameter string generation with proper formatting and quoting
+- Custom parameter parsing (multiline support, automatic dash prefix)
+- Event-driven architecture with ParametersChanged event
+
+The system integrates seamlessly with the existing mod management and provides granular control over Arma 3 launch behavior.
 
 ## Testing Checklist
 
