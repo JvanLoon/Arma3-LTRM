@@ -428,6 +428,16 @@ namespace Arma_3_LTRM.Views
             {
                 Event.ModFolders.Remove(displayItem.ModFolder);
                 UpdateDisplayItems();
+                
+                // Refresh the available items lists so removed items appear again
+                if (displayItem.ModFolder.ItemType == ModItemType.DLC)
+                {
+                    LoadDlcItems();
+                }
+                else if (displayItem.ModFolder.ItemType == ModItemType.Workshop)
+                {
+                    LoadWorkshopItems();
+                }
             }
         }
 
