@@ -36,6 +36,18 @@ namespace Arma_3_LTRM.Views
             _settingsManager = new SettingsManager();
             _ftpManager = new FtpManager();
             _ftpManager.SetCacheLifetime(TimeSpan.FromHours(_settingsManager.Settings.CacheLifetimeHours));
+            
+            // Auto-cleanup expired caches on startup
+            try
+            {
+                _ftpManager.ClearExpiredCaches();
+                System.Diagnostics.Debug.WriteLine("? Expired caches cleaned up on startup");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to clean expired caches: {ex.Message}");
+            }
+            
             _launchParametersManager = new LaunchParametersManager(_settingsManager.Settings.LaunchParameters);
             _launchParametersManager.ParametersChanged += (s, e) => 
             {

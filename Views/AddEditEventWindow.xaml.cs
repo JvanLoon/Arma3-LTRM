@@ -304,10 +304,7 @@ namespace Arma_3_LTRM.Views
                         try
                         {
                             var children = await _ftpManager.BrowseDirectoryAsync(
-                                _currentBrowsingRepo.Url,
-                                _currentBrowsingRepo.Port,
-                                _currentBrowsingRepo.Username,
-                                _currentBrowsingRepo.Password,
+                                _currentBrowsingRepo,  // ? Now uses Repository object (cache-aware)
                                 node.FullPath
                             );
 

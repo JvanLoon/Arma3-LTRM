@@ -1059,13 +1059,59 @@ namespace Arma_3_LTRM.Services
             public bool IsDirectory { get; set; }
         }
 
-        public async Task<List<FtpBrowseItem>> BrowseDirectoryAsync(string ftpUrl, int port, string username, string password, string path = "/")
+        public async Task<List<FtpBrowseItem>> BrowseDirectoryAsync(Repository repository, string path = "/")
+        {
+            return await BrowseDirectoryAsync(
+                repository.Url,
+                repository.Port,
+                repository.Username,
+                repository.Password,
+                path,
+                repository.Id.ToString()
+            );
+        }
+
+        public async Task<List<FtpBrowseItem>> BrowseDirectoryAsync(string ftpUrl, int port, string username, string password, string path = "/", string? repositoryId = null)
         {
             return await Task.Run(() =>
             {
                 var items = new List<FtpBrowseItem>();
+                
+                // Try to use persistent cache if repositoryId is provided
+                if (!string.IsNullOrEmpty(repositoryId))
+                {
+                    var cachedData = _cacheManager.LoadCache(repositoryId);
+                    
+                    if (cachedData != null && !cachedData.IsExpired())
+                    {
+                        // Check if this specific path exists in cache
+                        if (cachedData.DirectoryCache.TryGetValue(path, out var cachedItems))
+                        {
+                            System.Diagnostics.Debug.WriteLine($"? Using cached browse data for {path} in repository {repositoryId}");
+                            
+                            foreach (var cachedItem in cachedItems)
+                            {
+                                if (cachedItem.Name == "." || cachedItem.Name == "..")
+                                    continue;
+
+                                items.Add(new FtpBrowseItem
+                                {
+                                    Name = cachedItem.Name,
+                                    FullPath = cachedItem.FullPath,
+                                    IsDirectory = cachedItem.IsDirectory
+                                });
+                            }
+                            
+                            return items;
+                        }
+                    }
+                }
+                
+                // Cache miss or not available - fetch live from FTP
                 try
                 {
+                    System.Diagnostics.Debug.WriteLine($"Fetching live FTP browse data for {path}");
+                    
                     // Properly escape the path to handle @ symbols and other special characters
                     var escapedPath = Uri.EscapeDataString(path).Replace("%2F", "/");
                     var ftpUri = new Uri($"ftp://{ftpUrl}:{port}{escapedPath}");
